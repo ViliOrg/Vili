@@ -12,68 +12,14 @@
 #include <random>
 #include <algorithm>
 #include <iterator>
-#include <typeinfo>
 
-namespace mse
+namespace vili
 {
 	namespace Functions
 	{
-		namespace Coord
-		{
-			extern int baseWidth;
-			extern int baseHeight;
-			extern int width;
-			extern int height;
-			int adaptCamX(int camX, int sizeX);
-			int adaptCamY(int camY, int sizeY);
-			template <typename V>
-			V transformX(V value);
-			template <typename V>
-			V transformY(V value);
-			template <typename V>
-			V reverseX(V value);
-			template <typename V>
-			V reverseY(V value);
-		}
-		namespace Map
-		{
-			template <typename T, typename U>
-			bool isInMap(T item, std::map<U, T>& map);
-			template <typename T, typename U>
-			bool keyInMap(T item, std::map<T, U>& map);
-		}
-		namespace Math
-		{
-			extern double pi;
-			int randint(int min, int max);
-			double randfloat();
-			template <typename N>
-			N getMin(N min1, N min2);
-			template <typename N>
-			N getMax(N max1, N max2);
-			template <typename N>
-			bool isBetween(N target, N lowerBound, N upperBound);
-			bool isDoubleInt(double& value);
-		}
-		namespace Run
-		{
-			class Parser
-			{
-				private:
-					char** start;
-					int size;
-				public:
-					Parser(char** start, int size);
-					bool argumentExists(std::string arg);
-					std::string getArgumentValue(std::string arg);
-			};
-		}
 		namespace String
 		{
 			std::vector<std::string> split(const std::string &str, const std::string &delimiters = " ");
-			std::vector<std::string> multiSplit(std::string str, std::vector<std::string> seps, std::vector<std::string> sepsBef, std::vector<std::string> sepsAft);
-			std::vector<std::string> multiSplit(std::string str, std::vector<std::string> sepsBef, std::vector<std::string> sepsAft);
-			std::vector<std::string> multiSplit(std::string str, std::vector<std::string> seps);
 			int occurencesInString(std::string str, std::string occur);
 			bool isStringAlpha(std::string str);
 			bool isStringAlphaNumeric(std::string str);
@@ -86,20 +32,9 @@ namespace mse
 			bool isBetween(const std::string& string, const std::string& bet);
 			std::string extract(const std::string& base, int start, int end);
 			std::vector<std::string> extractBetween(std::string &str, char delimiter1, char delimiter2);
-			std::string getRandomKey(std::string set, int len);
-			void regenerateEncoding(std::string& str);
-			std::string stringToAsciiCode(std::string& str);
-			std::string cutBeforeAsciiCode(std::string& str, int asciiCode);
 			typedef std::tuple<std::vector<std::string>, std::vector<std::string>, std::vector<std::pair<int, int>>> StringExtractor;
 			StringExtractor extractAllStrings(std::string);
 			bool contains(const std::string& string, const std::string& search);
-		}
-		namespace Type
-		{
-			template <typename V>
-			std::string getObjectType(V item);
-			template <class T>
-			std::string getClassType();
 		}
 		namespace Vector
 		{
@@ -116,79 +51,6 @@ namespace mse
 			int findSubVector(std::vector<V>& vector, std::vector<V>& find);
 			template <typename V>
 			std::vector<V> getSubVector(const std::vector<V>& vector, int start = 0, int end = 0);
-		}
-
-		//Functions::Coord
-		template<typename V>
-		inline V Functions::Coord::transformX(V value)
-		{
-			return value * Functions::Coord::width / Functions::Coord::baseWidth;
-		}
-		template<typename V>
-		inline V Functions::Coord::transformY(V value)
-		{
-			return value * Functions::Coord::height / Functions::Coord::baseHeight;
-		}
-		template<typename V>
-		inline V Functions::Coord::reverseX(V value)
-		{
-			return value / Functions::Coord::width * Functions::Coord::baseWidth;
-		}
-		template<typename V>
-		inline V Functions::Coord::reverseY(V value)
-		{
-			return value / Functions::Coord::height * Functions::Coord::baseHeight;
-		}
-
-		//Functions::Map
-		template <typename T, typename U>
-		inline bool Map::isInMap(T item, std::map<U, T>& map)
-		{
-			for (auto iterator = map.begin(); iterator != map.end(); iterator++) {
-				if (iterator->second == item)
-					return true;
-			}
-			return false;
-		}
-		template <typename T, typename U>
-		inline bool Map::keyInMap(T item, std::map<T, U>& map) {
-			for (auto iterator = map.begin(); iterator != map.end(); iterator++) {
-				if (iterator->first == item)
-					return true;
-			}
-			return false;
-		}
-
-		//Functions::Math
-		template <typename N>
-		inline N Math::getMin(N min1, N min2) {
-			return (min1 < min2) ? min1 : min2;
-		}
-		template <typename N>
-		inline N Math::getMax(N max1, N max2) {
-			return (max1 > max2) ? max1 : max2;
-		}
-		template <typename N>
-		inline bool Math::isBetween(N target, N lowerBound, N upperBound)
-		{
-			if (target >= lowerBound && target <= upperBound)
-				return true;
-			else
-				return false;
-		}
-
-		//Functions::Type
-		template<typename V>
-		std::string Type::getObjectType(V item)
-		{
-			std::vector<std::string> splittedTypeName = Functions::String::split(typeid(item).name(), " ");
-			return Functions::Vector::join(splittedTypeName, "", 1);
-		}
-		template <class T>
-		std::string Type::getClassType()
-		{
-			std::vector<std::string> splittedTypeName = Functions::String::split(typeid(T).name(), " ");
-			return Functions::Vector::join(splittedTypeName, "", 1);
 		}
 
 		//Functions::Vector

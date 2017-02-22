@@ -3,74 +3,10 @@
 
 #include "Functions.hpp"
 
-namespace mse
+namespace vili
 {
 	namespace Functions
 	{
-		int Coord::baseWidth = 1920;
-		int Coord::baseHeight = 1080;
-		double Math::pi = 3.14159265359;
-
-		//Functions::Coord
-		int Coord::adaptCamX(int camX, int sizeX) {
-			const int S_WIDTH = 1920;
-			camX -= S_WIDTH / 2;
-			if (camX < 0)
-				camX = 0;
-			if (camX + S_WIDTH > sizeX)
-				camX = sizeX - S_WIDTH;
-			camX += S_WIDTH / 2;
-			return camX;
-		}
-		int Coord::adaptCamY(int camY, int sizeY) {
-			const int S_HEIGHT = 1080;
-			camY -= S_HEIGHT / 2;
-			if (camY < 0)
-				camY = 0;
-			if (camY + S_HEIGHT > sizeY)
-				camY = sizeY - S_HEIGHT;
-			camY += S_HEIGHT / 2;
-			return camY;
-		}
-
-		std::random_device rd;     // only used once to initialise (seed) engine
-		std::mt19937 rng(rd());    // random-number engine used (Mersenne-Twister in this case)
-
-								   //Functions::Math
-		int Math::randint(int min, int max) {
-
-			std::uniform_int_distribution<int> uni(min, max); // guaranteed unbiased
-			return uni(rng);
-		}
-		double Math::randfloat() {
-			std::uniform_real_distribution<> dis(0, 1);
-			return dis(rng);
-		}
-		bool Math::isDoubleInt(double& value)
-		{
-			return (std::trunc(value) == value);
-		}
-
-		//Functions::Run
-		Run::Parser::Parser(char** start, int size)
-		{
-			this->start = start;
-			this->size = size;
-		}
-		bool Run::Parser::argumentExists(std::string arg)
-		{
-			return std::find(start, start + size, arg) != (start + size);
-		}
-		std::string Run::Parser::getArgumentValue(std::string arg)
-		{
-			char ** itr = std::find(start, start + size, arg);
-			if (itr != (start + size) && ++itr != (start + size))
-			{
-				return std::string(*itr);
-			}
-			return "";
-		}
-
 		//Functions::String
 		void String::removeCharFromString(std::string &str, std::string charToRemove) {
 			str.erase(remove(str.begin(), str.end(), charToRemove.c_str()[0]), str.end());
@@ -85,27 +21,6 @@ namespace mse
 				pos = str.find_first_of(delimiters, lastPos);
 			}
 			return tokens;
-		}
-		std::vector<std::string> String::multiSplit(std::string str, std::vector<std::string> seps) {
-			for (unsigned int i = 0; i < seps.size(); i++)
-				String::replaceStringInPlace(str, seps[i], "~" + seps[i] + "~");
-			return String::split(str, "~");
-		}
-		std::vector<std::string> String::multiSplit(std::string str, std::vector<std::string> sepsBef, std::vector<std::string> sepsAft) {
-			for (unsigned int i = 0; i < sepsBef.size(); i++)
-				String::replaceStringInPlace(str, sepsBef[i], sepsBef[i] + "~");
-			for (unsigned int i = 0; i < sepsAft.size(); i++)
-				String::replaceStringInPlace(str, sepsAft[i], "~" + sepsAft[i]);
-			return String::split(str, "~");
-		}
-		std::vector<std::string> String::multiSplit(std::string str, std::vector<std::string> seps, std::vector<std::string> sepsBef, std::vector<std::string> sepsAft) {
-			for (unsigned int i = 0; i < sepsBef.size(); i++)
-				String::replaceStringInPlace(str, sepsBef[i], sepsBef[i] + "~");
-			for (unsigned int i = 0; i < sepsAft.size(); i++)
-				String::replaceStringInPlace(str, sepsAft[i], "~" + sepsAft[i]);
-			for (unsigned int i = 0; i < seps.size(); i++)
-				String::replaceStringInPlace(str, seps[i], "~" + seps[i] + "~");
-			return String::split(str, "");
 		}
 		int String::occurencesInString(std::string str, std::string occur) {
 			int occurrences = 0;
@@ -210,50 +125,6 @@ namespace mse
 				String::replaceStringInPlace(str, strings[i], "");
 			return strings;
 		}
-		std::string String::getRandomKey(std::string set, int len)
-		{
-			std::string r;
-			for (int i = 0; i < len; i++) r.push_back(set.at(size_t(Math::randint(0, 100000) % set.size())));
-			return r;
-		}
-		void String::regenerateEncoding(std::string& str)
-		{
-			std::vector<int> data(str.begin(), str.end());
-			//for (int i = 0; i < data.size(); i++) { std::cout << data[i] << " "; }
-			//std::cout << std::endl;
-			int i = 0; char ch; str = "";
-			while (i < data.size()) { if (data[i] == -61) { if (i < data.size() - 1) { data[i] = data[i + 1] + 64; } data.erase(data.begin() + i + 1); } i++; }
-			for (int i = 0; i < data.size(); i++) { ch = data[i]; str += ch; }
-		}
-		std::string String::stringToAsciiCode(std::string & str)
-		{
-			std::vector<int> data(str.begin(), str.end());
-			std::vector<std::string> dataStr;
-			std::transform(data.begin(), data.end(), std::back_inserter(dataStr), [](const int& idata) { return std::to_string(idata); });
-			return Vector::join(dataStr, ",");
-		}
-
-		std::string String::cutBeforeAsciiCode(std::string & str, int asciiCode)
-		{
-			std::vector<int> data(str.begin(), str.end());
-			std::vector<std::string> dataStr;
-			for (int i = 0; i < data.size(); i++)
-			{
-				if (data[i] != asciiCode)
-				{
-					char a = data[i];
-					std::string strbuf;
-					std::stringstream strbridge;
-					strbridge << a;
-					strbridge >> strbuf;
-					dataStr.push_back(strbuf);
-				}
-				else
-					break;
-			}
-			return Vector::join(dataStr, ",");
-		}
-
 		String::StringExtractor String::extractAllStrings(std::string string)
 		{
 			bool readingString = false;
