@@ -234,7 +234,8 @@ namespace vili
 	}
 
 	//BaseAttribute
-	BaseAttribute::BaseAttribute(ContainerAttribute* parent, const std::string& id, const Types::DataType& btype, const std::string& bdata) : Attribute(parent, id, Types::BaseAttribute) {
+	BaseAttribute::BaseAttribute(ContainerAttribute* parent, const std::string& id, const Types::DataType& btype, const std::string& bdata) : Attribute(parent, id, Types::BaseAttribute) 
+	{
 		dtype = btype;
 		data = bdata;
 		this->parent = parent;
@@ -292,11 +293,11 @@ namespace vili
 	}
 
 	//LinkAttribute
-	LinkAttribute::LinkAttribute(ContainerAttribute* parent, std::string id, std::string path) : BaseAttribute(parent, id, Types::Link, "")
+	LinkAttribute::LinkAttribute(ContainerAttribute* parent, const std::string& id, const std::string& path) : Attribute(parent, id, Types::LinkAttribute)
 	{
 		this->path = path;
 	}
-	void LinkAttribute::update(ContainerAttribute* root)
+	Attribute* LinkAttribute::getTarget()
 	{
 		std::string linkroot = "";
 		if (parent->getType() == Types::ComplexAttribute) {
@@ -305,10 +306,12 @@ namespace vili
 				linkroot = complexParent->getBaseAttribute("__linkroot__")->get<std::string>();
 			}
 		}
-		
-		path = linkroot + "/" + Functions::String::extract(path, 2, 1);
+		ContainerAttribute* root = this->getParent();
+		while (root->getParent() != nullptr)
+			root = root->getParent();
+		std::string abspath = linkroot + "/" + Functions::String::extract(path, 2, 1);
 		Attribute* location = root;
-		std::vector<std::string> fullPath = Functions::String::split(path, "/");
+		std::vector<std::string> fullPath = Functions::String::split(abspath, "/");
 		for (std::string pathPart : fullPath) {
 			if (location->getType() == Types::ComplexAttribute) {
 				ComplexAttribute* complexLocation = (ComplexAttribute*) location;
@@ -338,9 +341,10 @@ namespace vili
 				}
 			}
 		}
-		BaseAttribute* baseLocation = (BaseAttribute*) location;
-		this->data = baseLocation->returnData();
-		this->dtype = baseLocation->getDataType();
+		return location;
+	}
+	void LinkAttribute::copy()
+	{
 	}
 
 	//ListAttribute
@@ -532,6 +536,15 @@ namespace vili
 				<< id << " in " << getNodePath() << std::endl;
 		}
 	}
+	LinkAttribute* ComplexAttribute::getLinkAttribute(const std::string& id)
+	{
+		if (childAttributes.find(id) != childAttributes.end() && childAttributes[id]->getType() == Types::LinkAttribute)
+			return dynamic_cast<LinkAttribute*>(childAttributes[id].get());
+		else {
+			std::cout << "<Error:DataParser:ComplexAttribute>[getLinkAttribute] : Can't find LinkAttribute "
+				<< id << " in " << getNodePath() << std::endl;
+		}
+	}
 	ComplexAttribute* ComplexAttribute::getComplexAttribute(const std::string& id) {
 		if (childAttributes.find(id) != childAttributes.end() && childAttributes[id]->getType() == Types::ComplexAttribute) {
 			return dynamic_cast<ComplexAttribute*>(childAttributes[id].get());
@@ -579,6 +592,16 @@ namespace vili
 		}
 		return allListAttributes;
 	}
+	std::vector<std::string> ComplexAttribute::getAllLinkAttributes()
+	{
+		std::vector<std::string> allLinkAttributes;
+		for (std::string attributeName : this->childAttributesNames) {
+			if (this->childAttributes[attributeName]->getType() == Types::LinkAttribute) {
+				allLinkAttributes.push_back(attributeName);
+			}
+		}
+		return allLinkAttributes;
+	}
 	bool ComplexAttribute::containsAttribute(const std::string& attributeName)
 	{
 		if (childAttributes.find(attributeName) != childAttributes.end())
@@ -600,6 +623,13 @@ namespace vili
 	}
 	bool ComplexAttribute::containsListAttribute(const std::string& attributeName) {
 		if (childAttributes.find(attributeName) != childAttributes.end() && childAttributes[attributeName]->getType() == Types::ListAttribute)
+			return true;
+		else
+			return false;
+	}
+	bool ComplexAttribute::containsLinkAttribute(const std::string& attributeName)
+	{
+		if (childAttributes.find(attributeName) != childAttributes.end() && childAttributes[attributeName]->getType() == Types::LinkAttribute)
 			return true;
 		else
 			return false;
@@ -648,6 +678,16 @@ namespace vili
 	void ComplexAttribute::pushComplexAttribute(ComplexAttribute* cmplx) {
 		childAttributes[cmplx->getID()] = std::unique_ptr<ComplexAttribute>(cmplx);
 		childAttributesNames.push_back(cmplx->getID());
+	}
+	void ComplexAttribute::createLinkAttribute(const std::string& id, const std::string& path)
+	{
+		childAttributes[id] = std::make_unique<LinkAttribute>(this, id, path);
+		childAttributesNames.push_back(id);
+	}
+	void ComplexAttribute::pushLinkAttribute(LinkAttribute* link)
+	{
+		childAttributes[link->getID()] = std::unique_ptr<LinkAttribute>(link);
+		childAttributesNames.push_back(link->getID());
 	}
 	void ComplexAttribute::writeAttributes(std::ofstream* file, unsigned int depth) {
 		for (unsigned int i = 0; i < depth; i++)
@@ -711,6 +751,19 @@ namespace vili
 		typedef std::map<std::string, std::unique_ptr<Attribute>>::iterator it_type;
 		it_type itDel = childAttributes.find(id);
 		if (itDel != childAttributes.end() && childAttributes[id]->getType() == Types::ListAttribute) {
+			if (!freeMemory)
+				childAttributes[id].release();
+			childAttributes.erase(itDel);
+		}
+	}
+	void ComplexAttribute::deleteLinkAttribute(const std::string& id, bool freeMemory)
+	{
+		if (Functions::Vector::isInList(id, this->getAllLinkAttributes())) {
+			childAttributesNames.erase(childAttributesNames.begin() + Functions::Vector::indexOfElement(id, this->getAllLinkAttributes()));
+		}
+		typedef std::map<std::string, std::unique_ptr<Attribute>>::iterator it_type;
+		it_type itDel = childAttributes.find(id);
+		if (itDel != childAttributes.end() && childAttributes[id]->getType() == Types::LinkAttribute) {
 			if (!freeMemory)
 				childAttributes[id].release();
 			childAttributes.erase(itDel);
@@ -943,22 +996,24 @@ namespace vili
 							std::string attributeValue = Functions::Vector::join(splittedLine, ":", 1, 0);
 							Types::DataType attributeType = Types::getVarType(attributeValue);
 
-							if (attributeType == Types::Link) {
-								LinkAttribute* dataLink = new LinkAttribute(getRootAttribute(curCat)->getPath(Path(addPath)), attributeName, attributeValue);
-								getRootAttribute(curCat)->getPath(Path(addPath))->pushBaseAttribute(dataLink);
-							}
-							else {
-								getRootAttribute(curCat)->getPath(Path(addPath))->createBaseAttribute(attributeName, attributeType, attributeValue);
-							}
-							
 							std::string pushIndicator;
 							if (addPath.size() == 0) { pushIndicator = curCat + ":Root"; }
 							else { pushIndicator = addPath[addPath.size() - 1]; }
-							if (verbose) {
-								std::cout << indenter() << "Create BaseAttribute " << attributeName << "(" << attributeValue;
-								std::cout << ") inside " << pushIndicator << " (Type:" << attributeType << ")" << std::endl;
+
+							if (attributeType == Types::Link) {
+								getRootAttribute(curCat)->getPath(Path(addPath))->createLinkAttribute(attributeName, attributeValue);
+								if (verbose) {
+									std::cout << indenter() << "Create LinkAttribute " << attributeName << " linking to " << attributeValue;
+									std::cout << " inside " << pushIndicator << " (Type:" << attributeType << ")" << std::endl;
+								}
 							}
-								
+							else {
+								getRootAttribute(curCat)->getPath(Path(addPath))->createBaseAttribute(attributeName, attributeType, attributeValue);
+								if (verbose) {
+									std::cout << indenter() << "Create BaseAttribute " << attributeName << "(" << attributeValue;
+									std::cout << ") inside " << pushIndicator << " (Type:" << attributeType << ")" << std::endl;
+								}
+							}	
 						}
 						else if (parsedLine.substr(0, 1) == "@")
 						{

@@ -65,6 +65,7 @@ namespace vili
 	};
 
 	class ContainerAttribute;
+	//Attribute
 	class Attribute
 	{
 	protected:
@@ -75,6 +76,7 @@ namespace vili
 		virtual void removeParent(ContainerAttribute* currentParent);
 		virtual ContainerAttribute* getParent();
 		friend class ContainerAttribute;
+		friend class LinkAttribute;
 	public:
 		Attribute(ContainerAttribute* parent, const std::string& id, const Types::AttributeType& type);
 		virtual ~Attribute() {}
@@ -87,6 +89,7 @@ namespace vili
 		virtual void setID(const std::string& id);
 	};
 
+	//ContainerAttribute
 	class ContainerAttribute : public Attribute
 	{
 	protected:
@@ -97,6 +100,7 @@ namespace vili
 		virtual Attribute* extractElement(Attribute* element) = 0;
 	};
 
+	//BaseAttribute
 	class BaseAttribute : public Attribute
 	{
 	protected:
@@ -116,16 +120,18 @@ namespace vili
 	};
 
 	//LinkAttribute
-	class LinkAttribute : public BaseAttribute
+	class LinkAttribute : public Attribute
 	{
 		private:
 			std::string path = "";
 		public:
-			LinkAttribute(ContainerAttribute* parent, std::string id, std::string path);
-			void update(ContainerAttribute* root);
+			LinkAttribute(ContainerAttribute* parent, const std::string& id, const std::string& path);
+			Attribute* getTarget();
+			template <class T> T get() {}
+			void copy();
 	};
 	
-
+	//ListAttribute
 	class ListAttribute : public ContainerAttribute
 	{
 	private:
@@ -149,6 +155,7 @@ namespace vili
 		virtual Attribute* extractElement(Attribute* element);
 	};
 
+	//ComplexAttribute
 	class ComplexAttribute : public ContainerAttribute
 	{
 		private:
@@ -174,15 +181,18 @@ namespace vili
 			BaseAttribute* getBaseAttribute(const std::string& attributeName);
 			ComplexAttribute* getComplexAttribute(const std::string& id);
 			ListAttribute* getListAttribute(const std::string& id);
+			LinkAttribute* getLinkAttribute(const std::string& id);
 			Types::AttributeType getAttributeType(const std::string& id);
 			std::vector<std::string> getAllAttributes();
 			std::vector<std::string> getAllComplexAttributes();
 			std::vector<std::string> getAllBaseAttributes();
 			std::vector<std::string> getAllListAttributes();
+			std::vector<std::string> getAllLinkAttributes();
 			bool containsAttribute(const std::string& attributeName);
 			bool containsBaseAttribute(const std::string& attributeName);
 			bool containsComplexAttribute(const std::string& attributeName);
 			bool containsListAttribute(const std::string& attributeName);
+			bool containsLinkAttribute(const std::string& attributeName);
 			void createBaseAttribute(const std::string& name, const Types::DataType& type, const std::string& data);
 			void createBaseAttribute(const std::string& name, const std::string& data);
 			void createBaseAttribute(const std::string& name, bool data);
@@ -193,12 +203,37 @@ namespace vili
 			void pushListAttribute(ListAttribute* attr);
 			void createComplexAttribute(const std::string& id);
 			void pushComplexAttribute(ComplexAttribute* cmplx);
+			void createLinkAttribute(const std::string& id, const std::string& path);
+			void pushLinkAttribute(LinkAttribute* link);
 			void writeAttributes(std::ofstream* file, unsigned int depth = 0);
 			void deleteBaseAttribute(const std::string& id, bool freeMemory = false);
 			void deleteComplexAttribute(const std::string& id, bool freeMemory = false);
 			void deleteListAttribute(const std::string& id, bool freeMemory = false);
+			void deleteLinkAttribute(const std::string& id, bool freeMemory = false);
 	};
 
+	class AttributeConstraint
+	{
+		private:
+			Attribute* attribute;
+			std::vector<std::function<bool(Attribute*)>> constraints;
+		public:
+			AttributeConstraint(Attribute* attribute);
+			void addConstraint(std::function<bool(Attribute*)> constraint);
+			bool checkAllConstraints();
+	};
+
+	typedef std::vector<std::pair<Types::DataType, std::vector<DataTypeConstraint>>> TemplateSignature;
+	class DataTemplate
+	{
+		private:
+			TemplateSignature signature;
+			bool checkSignature();
+		public:
+			void build(ComplexAttribute* parent, const std::string& id);
+	};
+
+	//DataParser
 	class DataParser
 	{
 	private:
@@ -262,6 +297,26 @@ namespace vili
 		else
 			std::cout << "<Error:DataParser:BaseAttribute>[getData] : " \
 			<< getNodePath() << " is not a <string> BaseAttribute (" << dtype << ")" << std::endl;
+	}
+
+	//LinkAttribute
+	template <> inline BaseAttribute* LinkAttribute::get() {
+		if (getTarget()->getType() == Types::BaseAttribute)
+			return dynamic_cast<BaseAttribute*>(getTarget());
+		else
+			std::cout << "<Error:ViliData:LinkAttribute>[get<BaseAttribute>] : Target " << path << " is not a BaseAttribute" << std::endl;
+	}
+	template <> inline ComplexAttribute* LinkAttribute::get() {
+		if (getTarget()->getType() == Types::ComplexAttribute)
+			return dynamic_cast<ComplexAttribute*>(getTarget());
+		else
+			std::cout << "<Error:ViliData:LinkAttribute>[get<ComplexAttribute>] : Target " << path << " is not a ComplexAttribute" << std::endl;
+	}
+	template <> inline ListAttribute* LinkAttribute::get() {
+		if (getTarget()->getType() == Types::ListAttribute)
+			return dynamic_cast<ListAttribute*>(getTarget());
+		else
+			std::cout << "<Error:ViliData:LinkAttribute>[get<ListAttribute>] : Target " << path << " is not a ListAttribute" << std::endl;
 	}
 
 	//ComplexAttribute
