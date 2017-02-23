@@ -41,6 +41,8 @@ namespace vili
 		}
 		else if (var.substr(0, 2) == "&(" && var.substr(var.size() - 1, 1) == ")")
 			attributeType = Types::Link;
+		else if (var.substr(0, 1) == "$" && Functions::String::occurencesInString(var, "(") == 1 && var.substr(var.size() - 1, 1) == ")")
+			attributeType = Types::Template;
 		else if (var.substr(0, 1) == "\"" && var.substr(var.size() - 1, 1) == "\"")
 			attributeType = Types::String;
 		else if (Functions::String::isStringFloat(var))
@@ -69,6 +71,9 @@ namespace vili
 		else if (type == "range" || type == "Range") {
 			return Types::Range;
 		}
+		else if (type == "template" || type == "Template") {
+			return Types::Template;
+		}
 		else {
 			return Types::Unknown;
 		}
@@ -81,6 +86,7 @@ namespace vili
 		else if (type == Types::Float) return "Float";
 		else if (type == Types::Bool) return "Bool";
 		else if (type == Types::Range) return "Range";
+		else if (type == Types::Template) return "Template";
 		else if (type == Types::Unknown) return "Unknown";
 	}
 
@@ -770,6 +776,49 @@ namespace vili
 		}
 	}
 
+	//AttributeConstraintManager
+	AttributeConstraintManager::AttributeConstraintManager(BaseAttribute* attribute)
+	{
+		this->attribute = attribute;
+	}
+	void AttributeConstraintManager::addConstraint(std::function<bool(BaseAttribute*)> constraint)
+	{
+		constraints.push_back(constraint);
+	}
+	bool AttributeConstraintManager::checkAllConstraints()
+	{
+		for (std::function<bool(BaseAttribute*)>& constraint : constraints) {
+			if (!constraint(attribute))
+				return false;
+		}
+		return true;
+	}
+
+	//DataTemplate
+	bool DataTemplate::checkSignature()
+	{
+		for (AttributeConstraintManager& constraintManager : signature) {
+			if (!constraintManager.checkAllConstraints()) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	void DataTemplate::addConstraintManager(AttributeConstraintManager constraintManager, bool facultative)
+	{
+		if (facultative) {
+			signatureEnd = true;
+			signature.push_back(constraintManager);
+		}
+		else if (!facultative && !signatureEnd) {
+			signature.push_back(constraintManager);
+		}
+		else {
+			std::cout << "<Error:ViliData:DataTemplate>[addConstraintManager] : Can't use a facultative argument after a non-facultative argument (" << signature.size() << ")" << std::endl;
+		}
+	}
+
 	//DataParser
 	DataParser::DataParser()
 	{
@@ -966,8 +1015,29 @@ namespace vili
 							{
 								if (verbose) std::cout << indenter() << "Creating New Template from : " << instructionValue << std::endl;
 								ComplexAttribute* templateBase = getRootAttribute(instructionValue);
+								DataTemplate newTemplate;
 								if (templateBase != nullptr) {
-									//Building Template
+									if (templateBase->containsComplexAttribute("__init__") && templateBase->containsComplexAttribute("__body__")) {
+										int i = 0;
+										while (true) {
+											if (templateBase->at("__init__")->containsComplexAttribute(std::to_string(i))) {
+												AttributeConstraintManager newConstraint(templateBase->at("__init__", std::to_string(i))->getBaseAttribute("value"));
+												std::string requiredType = templateBase->at("__init__", std::to_string(i))->getBaseAttribute("type")->get<std::string>();
+												Types::DataType requiredConstraintType = Types::stringToDataType(requiredType);
+												newConstraint.addConstraint([requiredConstraintType](BaseAttribute* attribute) -> bool {
+													return (attribute->getDataType() == requiredConstraintType);
+												});
+												newTemplate.addConstraintManager(newConstraint);
+											}
+											else {
+												break;
+											}
+											i++;
+										}
+									}
+									else {
+										std::cout << "<Error:ViliData:DataParser>[parseFile] : Can't create Template " << instructionValue << " without __init__ and __body__" << std::endl;
+									}
 								}
 								else {
 									std::cout << "<Error:ViliData:DataParser>[parseFile] : Can't create Template from non-existant RootAttribute " << instructionValue << std::endl;
@@ -1005,6 +1075,22 @@ namespace vili
 								if (verbose) {
 									std::cout << indenter() << "Create LinkAttribute " << attributeName << " linking to " << attributeValue;
 									std::cout << " inside " << pushIndicator << " (Type:" << attributeType << ")" << std::endl;
+								}
+							}
+							else if (attributeType == Types::Template) {
+								std::string templateName = attributeValue.substr(1, attributeValue.size() - 1);
+								templateName = Functions::String::split(templateName, "(")[0];
+								std::cout << "Trying to instanciate new template object : " << templateName << std::endl;
+								if (templateList.find(templateName) != templateList.end()) {
+									std::cout << "Found template !" << std::endl;
+									std::string argPart = Functions::String::split(attributeValue, "(")[1];
+									argPart = argPart.substr(0, argPart.size() - 1);
+									std::cout << "argpart : " << argPart << std::endl;
+									std::vector<std::string> templateArgs = Functions::String::split(argPart, "|");
+									std::cout << "Args : " << std::endl;
+									for (std::string& arg : templateArgs) {
+										std::cout << "Arg:" << arg << " >> " << Types::getVarType(arg) << std::endl;
+									}
 								}
 							}
 							else {

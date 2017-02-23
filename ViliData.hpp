@@ -10,6 +10,7 @@
 #include <iostream>
 #include <algorithm>
 #include <memory>
+#include <functional>
 
 #include "Functions.hpp"
 
@@ -35,7 +36,8 @@ namespace vili
 			Bool = 0x3,
 			Range = 0x4,
 			Link = 0x5,
-			Unknown = 0x6
+			Template = 0x6,
+			Unknown = 0x7
 		};
 
 		Types::DataType stringToDataType(std::string type);
@@ -212,25 +214,26 @@ namespace vili
 			void deleteLinkAttribute(const std::string& id, bool freeMemory = false);
 	};
 
-	class AttributeConstraint
+	class AttributeConstraintManager
 	{
 		private:
-			Attribute* attribute;
-			std::vector<std::function<bool(Attribute*)>> constraints;
+			BaseAttribute* attribute;
+			std::vector<std::function<bool(BaseAttribute*)>> constraints;
 		public:
-			AttributeConstraint(Attribute* attribute);
-			void addConstraint(std::function<bool(Attribute*)> constraint);
+			AttributeConstraintManager(BaseAttribute* attribute);
+			void addConstraint(std::function<bool(BaseAttribute*)> constraint);
 			bool checkAllConstraints();
 	};
 
-	typedef std::vector<std::pair<Types::DataType, std::vector<DataTypeConstraint>>> TemplateSignature;
 	class DataTemplate
 	{
 		private:
-			TemplateSignature signature;
+			std::vector<AttributeConstraintManager> signature;
+			bool signatureEnd = false;
 			bool checkSignature();
 		public:
 			void build(ComplexAttribute* parent, const std::string& id);
+			void addConstraintManager(AttributeConstraintManager constraintManager, bool facultative = false);
 	};
 
 	//DataParser
@@ -239,6 +242,7 @@ namespace vili
 	private:
 		std::string fileName;
 		std::unique_ptr<ComplexAttribute> root = nullptr;
+		std::map<std::string, DataTemplate> templateList;
 		std::vector<std::string> flagList;
 		DataParserNavigator* dpNav = NULL;
 		bool checkNavigator();
