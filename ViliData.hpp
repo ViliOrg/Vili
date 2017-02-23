@@ -119,9 +119,11 @@ namespace vili
 		void set(bool var);
 		Types::DataType getDataType();
 		template <class T> T get() {}
+		void copy(ContainerAttribute* newParent, std::string newid = "");
 	};
 
 	//LinkAttribute
+	class ComplexAttribute;
 	class LinkAttribute : public Attribute
 	{
 		private:
@@ -130,7 +132,9 @@ namespace vili
 			LinkAttribute(ContainerAttribute* parent, const std::string& id, const std::string& path);
 			Attribute* getTarget();
 			template <class T> T get() {}
-			void copy();
+			std::string getPath();
+			void apply();
+			void copy(ComplexAttribute* newParent, std::string newid = "");
 	};
 	
 	//ListAttribute
@@ -155,6 +159,7 @@ namespace vili
 		void clear();
 		void erase(unsigned int index);
 		virtual Attribute* extractElement(Attribute* element);
+		void copy(ComplexAttribute* newParent, std::string newid = "");
 	};
 
 	//ComplexAttribute
@@ -212,6 +217,7 @@ namespace vili
 			void deleteComplexAttribute(const std::string& id, bool freeMemory = false);
 			void deleteListAttribute(const std::string& id, bool freeMemory = false);
 			void deleteLinkAttribute(const std::string& id, bool freeMemory = false);
+			void copy(ComplexAttribute* newParent, std::string newid = "");
 	};
 
 	class AttributeConstraintManager
@@ -223,15 +229,19 @@ namespace vili
 			AttributeConstraintManager(BaseAttribute* attribute);
 			void addConstraint(std::function<bool(BaseAttribute*)> constraint);
 			bool checkAllConstraints();
+			std::string getArgumentPath();
 	};
 
 	class DataTemplate
 	{
 		private:
 			std::vector<AttributeConstraintManager> signature;
+			ComplexAttribute body;
 			bool signatureEnd = false;
 			bool checkSignature();
 		public:
+			DataTemplate();
+			ComplexAttribute* getBody();
 			void build(ComplexAttribute* parent, const std::string& id);
 			void addConstraintManager(AttributeConstraintManager constraintManager, bool facultative = false);
 	};
@@ -242,7 +252,7 @@ namespace vili
 	private:
 		std::string fileName;
 		std::unique_ptr<ComplexAttribute> root = nullptr;
-		std::map<std::string, DataTemplate> templateList;
+		std::map<std::string, DataTemplate*> templateList;
 		std::vector<std::string> flagList;
 		DataParserNavigator* dpNav = NULL;
 		bool checkNavigator();

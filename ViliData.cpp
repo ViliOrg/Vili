@@ -297,6 +297,22 @@ namespace vili
 	Types::DataType BaseAttribute::getDataType() {
 		return dtype;
 	}
+	void BaseAttribute::copy(ContainerAttribute* newParent, std::string newid)
+	{
+		if (newParent->getType() == Types::ListAttribute) {
+			if (dtype == Types::Int)
+				dynamic_cast<ListAttribute*>(newParent)->push(this->get<int>());
+			else if (dtype == Types::Float)
+				dynamic_cast<ListAttribute*>(newParent)->push(this->get<double>());
+			else if (dtype == Types::Bool)
+				dynamic_cast<ListAttribute*>(newParent)->push(this->get<bool>());
+			else if (dtype == Types::String)
+				dynamic_cast<ListAttribute*>(newParent)->push(this->get<std::string>());
+		}
+		else if (newParent->getType() == Types::ComplexAttribute) {
+			dynamic_cast<ComplexAttribute*>(newParent)->createBaseAttribute((newid == "") ? this->id : newid, this->dtype, this->data);
+		}
+	}
 
 	//LinkAttribute
 	LinkAttribute::LinkAttribute(ContainerAttribute* parent, const std::string& id, const std::string& path) : Attribute(parent, id, Types::LinkAttribute)
@@ -306,11 +322,9 @@ namespace vili
 	Attribute* LinkAttribute::getTarget()
 	{
 		std::string linkroot = "";
-		if (parent->getType() == Types::ComplexAttribute) {
-			ComplexAttribute* complexParent = (ComplexAttribute*) parent;
-			if (complexParent->containsBaseAttribute("__linkroot__")) {
-				linkroot = complexParent->getBaseAttribute("__linkroot__")->get<std::string>();
-			}
+		ComplexAttribute* complexParent = dynamic_cast<ComplexAttribute*>(parent);
+		if (complexParent->containsBaseAttribute("__linkroot__")) {
+			linkroot = complexParent->getBaseAttribute("__linkroot__")->get<std::string>();
 		}
 		ContainerAttribute* root = this->getParent();
 		while (root->getParent() != nullptr)
@@ -349,8 +363,22 @@ namespace vili
 		}
 		return location;
 	}
-	void LinkAttribute::copy()
+	std::string LinkAttribute::getPath()
 	{
+		std::string linkroot = "";
+		ComplexAttribute* complexParent = dynamic_cast<ComplexAttribute*>(parent);
+		if (complexParent->containsBaseAttribute("__linkroot__")) {
+			linkroot = complexParent->getBaseAttribute("__linkroot__")->get<std::string>();
+		}
+		return linkroot + "/" + Functions::String::extract(path, 2, 1);
+
+	}
+	void LinkAttribute::apply()
+	{
+	}
+	void LinkAttribute::copy(ComplexAttribute* newParent, std::string newid)
+	{
+		newParent->createLinkAttribute((newid == "") ? this->id : newid, this->path);
 	}
 
 	//ListAttribute
@@ -440,6 +468,13 @@ namespace vili
 			Functions::Vector::eraseAll(dataList, std::unique_ptr<BaseAttribute>(dynamic_cast<BaseAttribute*>(element)));
 		}
 		return element;
+	}
+	void ListAttribute::copy(ComplexAttribute* newParent, std::string newid)
+	{
+		newParent->createListAttribute((newid == "") ? this->id : newid);
+		for (int i = 0; i < dataList.size(); i++) {
+			dataList[i]->copy(newParent);
+		}
 	}
 
 
@@ -776,6 +811,26 @@ namespace vili
 		}
 	}
 
+	void ComplexAttribute::copy(ComplexAttribute* newParent, std::string newid)
+	{
+		newParent->createComplexAttribute((newid == "") ? this->id : newid);
+		for (int i = 0; i < childAttributesNames.size(); i++) {
+			Attribute* child = childAttributes[childAttributesNames[i]].get();
+			if (child->getType() == Types::BaseAttribute) {
+				dynamic_cast<BaseAttribute*>(child)->copy(newParent->getComplexAttribute(this->id));
+			}
+			else if (child->getType() == Types::ListAttribute) {
+				dynamic_cast<ListAttribute*>(child)->copy(newParent->getComplexAttribute(this->id));
+			}
+			else if (child->getType() == Types::ComplexAttribute) {
+				dynamic_cast<ComplexAttribute*>(child)->copy(newParent->getComplexAttribute(this->id));
+			}
+			else if (child->getType() == Types::LinkAttribute) {
+				dynamic_cast<LinkAttribute*>(child)->copy(newParent->getComplexAttribute(this->id));
+			}
+		}
+	}
+
 	//AttributeConstraintManager
 	AttributeConstraintManager::AttributeConstraintManager(BaseAttribute* attribute)
 	{
@@ -794,7 +849,33 @@ namespace vili
 		return true;
 	}
 
+	std::string AttributeConstraintManager::getArgumentPath()
+	{
+		return attribute->getNodePath();
+	}
+
 	//DataTemplate
+	DataTemplate::DataTemplate() : body("root")
+	{
+	}
+	ComplexAttribute* DataTemplate::getBody()
+	{
+		return &body;
+	}
+	void DataTemplate::build(ComplexAttribute* parent, const std::string& id)
+	{
+		if (checkSignature()) {
+			body.getComplexAttribute("__body__")->copy(parent, id);
+			for (AttributeConstraintManager constraintManager : signature) {
+				std::cout << "ArgPath : " << constraintManager.getArgumentPath() << std::endl;
+				std::vector<std::string> splittedPath = Functions::String::split(constraintManager.getArgumentPath(), "/");
+				std::string seekPath = Functions::Vector::join(splittedPath, "/", 1, 0);
+			}
+		}
+		else {
+			std::cout << "<Error:ViliData:DataTemplate>[build] : Type / Constraint mismatch in Template build !" << std::endl;
+		}
+	}
 	bool DataTemplate::checkSignature()
 	{
 		for (AttributeConstraintManager& constraintManager : signature) {
@@ -804,7 +885,6 @@ namespace vili
 		}
 		return true;
 	}
-
 	void DataTemplate::addConstraintManager(AttributeConstraintManager constraintManager, bool facultative)
 	{
 		if (facultative) {
@@ -1015,7 +1095,7 @@ namespace vili
 							{
 								if (verbose) std::cout << indenter() << "Creating New Template from : " << instructionValue << std::endl;
 								ComplexAttribute* templateBase = getRootAttribute(instructionValue);
-								DataTemplate newTemplate;
+								DataTemplate* newTemplate = new DataTemplate();
 								if (templateBase != nullptr) {
 									if (templateBase->containsComplexAttribute("__init__") && templateBase->containsComplexAttribute("__body__")) {
 										int i = 0;
@@ -1027,13 +1107,16 @@ namespace vili
 												newConstraint.addConstraint([requiredConstraintType](BaseAttribute* attribute) -> bool {
 													return (attribute->getDataType() == requiredConstraintType);
 												});
-												newTemplate.addConstraintManager(newConstraint);
+												newTemplate->addConstraintManager(newConstraint);
 											}
 											else {
 												break;
 											}
 											i++;
 										}
+										templateBase->at("__body__")->copy(newTemplate->getBody());
+										newTemplate->build(templateBase, "yolo");
+										templateList[templateBase->getID()] = newTemplate;
 									}
 									else {
 										std::cout << "<Error:ViliData:DataParser>[parseFile] : Can't create Template " << instructionValue << " without __init__ and __body__" << std::endl;
@@ -1111,7 +1194,7 @@ namespace vili
 							{
 								complexToHeritID = Functions::String::replaceString(Functions::String::split(complexElementID, ":")[1], " ", "");
 								complexElementID = Functions::String::split(complexElementID, ":")[0];
-								complexToHeritIDList = Functions::String::split(complexToHeritID, ",");
+								complexToHeritIDList = Functions::String::split(complexToHeritID, "|");
 
 								for (unsigned int i = 0; i < complexToHeritIDList.size(); i++) {
 									complexToHerit.push_back(getRootAttribute(curCat)->getComplexAttribute(complexToHeritIDList[i]));

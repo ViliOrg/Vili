@@ -10,6 +10,7 @@ int main(int argc, char** argv)
 
 	DataParser parser;
 	parser.parseFile("Test.vili", true);
+	parser.writeFile("Return.vili", true);
 
 	return 0;
 }
