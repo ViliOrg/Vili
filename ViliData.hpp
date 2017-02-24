@@ -129,12 +129,14 @@ namespace vili
 		private:
 			std::string path = "";
 		public:
-			LinkAttribute(ContainerAttribute* parent, const std::string& id, const std::string& path);
+			LinkAttribute(ComplexAttribute* parent, const std::string& id, const std::string& path);
 			Attribute* getTarget();
 			template <class T> T get() {}
 			std::string getPath();
+			std::string getFullPath();
 			void apply();
 			void copy(ComplexAttribute* newParent, std::string newid = "");
+			bool operator==(LinkAttribute compare);
 	};
 	
 	//ListAttribute
@@ -218,17 +220,19 @@ namespace vili
 			void deleteListAttribute(const std::string& id, bool freeMemory = false);
 			void deleteLinkAttribute(const std::string& id, bool freeMemory = false);
 			void copy(ComplexAttribute* newParent, std::string newid = "");
+			void walk(std::function<void(ComplexAttribute*)> walkFunction);
 	};
 
 	class AttributeConstraintManager
 	{
 		private:
-			BaseAttribute* attribute;
+			LinkAttribute attribute;
 			std::vector<std::function<bool(BaseAttribute*)>> constraints;
 		public:
-			AttributeConstraintManager(BaseAttribute* attribute);
+			AttributeConstraintManager(ComplexAttribute* parent, std::string path);
 			void addConstraint(std::function<bool(BaseAttribute*)> constraint);
 			bool checkAllConstraints();
+			LinkAttribute* getLinkAttribute();
 			std::string getArgumentPath();
 	};
 
