@@ -1,0 +1,15 @@
+Animals:
+    @Bird
+        @Hawk
+            size:5
+            speed:100
+        @Eagle
+            size:13
+            speed:80
+    @Fish
+        @Salmon
+            size:4
+            speed:30
+        @Shark
+            size:17
+            speed:20
