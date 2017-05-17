@@ -300,11 +300,13 @@ namespace vili
 	//BaseAttribute
 	BaseAttribute::BaseAttribute(ContainerAttribute* parent, const std::string& id, const Types::DataType& dataType) : Attribute(parent, id, Types::BaseAttribute)
 	{
+		new((void*)& String) std::string();
 		m_dataType = dataType;
 	}
 	BaseAttribute::BaseAttribute(const std::string& id, const Types::DataType& dataType) : Attribute(nullptr, id, Types::BaseAttribute)
 	{
 		m_dataType = dataType;
+		new((void*)& String) std::string();
 	}
 	void BaseAttribute::set(int var)
 	{
@@ -324,6 +326,13 @@ namespace vili
 	{
 		if (m_dataType == Types::String)
 			String = var;
+		else
+			throw aube::ErrorHandler::Raise("Vili.Vili.BaseAttribute.WrongStringSet", { { "path", getNodePath() },{ "type", dataTypeToString(m_dataType) } });
+	}
+	void BaseAttribute::set(const char* var)
+	{
+		if (m_dataType == Types::String)
+			String = std::string(var);
 		else
 			throw aube::ErrorHandler::Raise("Vili.Vili.BaseAttribute.WrongStringSet", { { "path", getNodePath() },{ "type", dataTypeToString(m_dataType) } });
 	}
@@ -1571,9 +1580,6 @@ namespace vili
 							}
 							else
 							{
-								if (attributeType == Types::String)
-									attributeValue = Functions::String::extract(attributeValue, 1, 1);
-
 								getPath(Path(addPath))->createBaseAttribute(attributeID, attributeType, attributeValue);
 								if (verbose)
 								{
