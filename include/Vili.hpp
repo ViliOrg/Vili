@@ -120,6 +120,7 @@ namespace vili
 		void set(int var);
 		void set(double var);
 		void set(const std::string& var);
+		void set(const char* var);
 		void set(bool var);
 		void autoset(std::string rawData);
 		Types::DataType getDataType() const;
