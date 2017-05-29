@@ -122,3 +122,14 @@ magenta:Color(255, 0, 255)
 transparent:Color(0, 0, 0, 0)
 transparent_red:Color(255, 0, 0, 128)
 ```
+
+## File list (Ranges)
+
+```
+Images:
+  files:[0..499]
+  model:"%s.png"
+Documents:
+  files:[99..63]
+  model:"%s.doc"
+```
