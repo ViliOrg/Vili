@@ -57,3 +57,68 @@ Germany:
 UnitedKingdom:
   cities:["London", "Manchester", "Liverpool", "Glasgow"]
 ```
+
+## Little company (Inheritance)
+
+```
+Employees:
+  TeamBusiness:
+    team:"Business"
+    rank:1
+  TeamDeveloppers:
+    team:"Developpers"
+    rank:2
+  TeamSupport:
+    team:"Support"
+    rank:3
+  Bob(TeamBusiness):
+    name:"Bob Dupont"
+  Mark(TeamDeveloppers):
+    name:"Mark Mark"
+  Gregory(TeamSupport):
+    name:"Gregory No"
+```
+
+## Colors (Templates)
+
+`ColorTemplate.vili`
+
+```
+Color:    
+    IntComposant:
+      type:"Int"
+    FaculativeIntComposant(IntComposant):
+      defaultValue:255
+
+    __init__:
+        0(IntComposant):
+        1(IntComposant):
+        2(IntComposant):
+        3(FaculativeIntComposant):
+
+    __body__:
+        type:"Color"
+        r:&(0/value)
+        g:&(1/value)
+        b:&(2/value)
+        a:&(3/value)
+
+Template(Color);
+```
+
+`Color.vili`
+
+```
+Include (ColorTemplate);
+
+black:Color(0, 0, 0)
+white:Color(255, 255, 255)
+red:Color(255, 0, 0)
+green:Color(0, 255, 0)
+blue:Color(0, 0, 255)
+yellow:Color(255, 255, 0)
+cyan:Color(0, 255, 255)
+magenta:Color(255, 0, 255)
+transparent:Color(0, 0, 0, 0)
+transparent_red:Color(255, 0, 0, 128)
+```
