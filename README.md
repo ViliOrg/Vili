@@ -3,7 +3,7 @@ A nice and readable data format !
 
 # Examples :
 
-## Animals
+## Animals (Simple tree-like structure)
 ```
 Animalia:
   Chordate:
@@ -46,4 +46,14 @@ Animalia:
                 name:"Housefly"
                 size:0.12
                 cool:False
+```
+## Countries and Cities (Lists)
+
+```
+France:
+  cities:["Paris", "Marseille", "Lyon", "Nice"]
+Germany:
+  cities:["Berlin", "Hamburg", "Munich", "Cologne"]
+UnitedKingdom:
+  cities:["London", "Manchester", "Liverpool", "Glasgow"]
 ```
