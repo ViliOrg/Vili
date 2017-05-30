@@ -102,19 +102,19 @@ namespace vili
 	{
 		return getPath(cPath)->at<T>(pathParts...);
 	}
-	template <> inline ComplexAttribute* ComplexAttribute::at(const std::string& cPath) const
+	template <> inline ComplexAttribute* ComplexAttribute::at<ComplexAttribute>(const std::string& cPath) const
 	{
 		return getComplexAttribute(cPath);
 	}
-	template <> inline ListAttribute* ComplexAttribute::at(const std::string& cPath) const
+	template <> inline ListAttribute* ComplexAttribute::at<ListAttribute>(const std::string& cPath) const
 	{
 		return getListAttribute(cPath);
 	}
-	template <> inline BaseAttribute* ComplexAttribute::at(const std::string& cPath) const
+	template <> inline BaseAttribute* ComplexAttribute::at<BaseAttribute>(const std::string& cPath) const
 	{
 		return getBaseAttribute(cPath);
 	}
-	template <> inline LinkAttribute* ComplexAttribute::at(const std::string& cPath) const
+	template <> inline LinkAttribute* ComplexAttribute::at<LinkAttribute>(const std::string& cPath) const
 	{
 		return getLinkAttribute(cPath);
 	}
