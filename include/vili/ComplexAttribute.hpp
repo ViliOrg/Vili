@@ -35,21 +35,21 @@ namespace vili
 		Attribute* extractElement(Attribute* element) override;
 		void heritage(ComplexAttribute* heritTarget);
 
-		ComplexAttribute* getPath(std::string attributePath) const;
+		ComplexAttribute& getPath(std::string attributePath) const;
 		ComplexAttribute& operator[](const std::string& cPath) const;
 
-		ComplexAttribute* at(const std::string& cPath) const;
+		ComplexAttribute& at(const std::string& cPath) const;
 		template<class T, class ...Args>
-		T* at(const std::string& cPath, Args ...pathParts) const;
+		T& at(const std::string& cPath, Args ...pathParts) const;
 		template<class ...Args>
-		ComplexAttribute* at(const std::string& cPath, Args ...pathParts) const;
-		template<class T> T* at(const std::string& cPath) const { return T(); };
+		ComplexAttribute& at(const std::string& cPath, Args ...pathParts) const;
+		template<class T> T& at(const std::string& cPath) const { return T(); };
 
 		Attribute* get(const std::string& attributeID) const;
-		BaseAttribute* getBaseAttribute(const std::string& attributeID) const;
-		ComplexAttribute* getComplexAttribute(const std::string& attributeID) const;
-		ListAttribute* getListAttribute(const std::string& attributeID) const;
-		LinkAttribute* getLinkAttribute(const std::string& attributeID) const;
+		BaseAttribute& getBaseAttribute(const std::string& attributeID) const;
+		ComplexAttribute& getComplexAttribute(const std::string& attributeID) const;
+		ListAttribute& getListAttribute(const std::string& attributeID) const;
+		LinkAttribute& getLinkAttribute(const std::string& attributeID) const;
 
 		Types::AttributeType getAttributeType(const std::string& id) const;
 		std::vector<std::string> getAll(Types::AttributeType searchType = Types::Attribute) const;
@@ -93,28 +93,28 @@ namespace vili
 	};
 
 	template<class ...Args>
-	ComplexAttribute* ComplexAttribute::at(const std::string& cPath, Args ...pathParts) const
+	ComplexAttribute& ComplexAttribute::at(const std::string& cPath, Args ...pathParts) const
 	{
-		return getPath(cPath)->at(pathParts...);
+		return getPath(cPath).at(pathParts...);
 	}
 	template<class T, class ...Args>
-	T* ComplexAttribute::at(const std::string& cPath, Args ...pathParts) const
+	T& ComplexAttribute::at(const std::string& cPath, Args ...pathParts) const
 	{
-		return getPath(cPath)->at<T>(pathParts...);
+		return getPath(cPath).at<T>(pathParts...);
 	}
-	template <> inline ComplexAttribute* ComplexAttribute::at<ComplexAttribute>(const std::string& cPath) const
+	template <> inline ComplexAttribute& ComplexAttribute::at<ComplexAttribute>(const std::string& cPath) const
 	{
 		return getComplexAttribute(cPath);
 	}
-	template <> inline ListAttribute* ComplexAttribute::at<ListAttribute>(const std::string& cPath) const
+	template <> inline ListAttribute& ComplexAttribute::at<ListAttribute>(const std::string& cPath) const
 	{
 		return getListAttribute(cPath);
 	}
-	template <> inline BaseAttribute* ComplexAttribute::at<BaseAttribute>(const std::string& cPath) const
+	template <> inline BaseAttribute& ComplexAttribute::at<BaseAttribute>(const std::string& cPath) const
 	{
 		return getBaseAttribute(cPath);
 	}
-	template <> inline LinkAttribute* ComplexAttribute::at<LinkAttribute>(const std::string& cPath) const
+	template <> inline LinkAttribute& ComplexAttribute::at<LinkAttribute>(const std::string& cPath) const
 	{
 		return getLinkAttribute(cPath);
 	}
@@ -138,7 +138,7 @@ namespace vili
 			for (std::string& complex : getAll(Types::ComplexAttribute))
 			{
 				if (!baseIterator.over())
-					getComplexAttribute(complex)->walk<T>(walkFunction, baseIterator);
+					getComplexAttribute(complex).walk<T>(walkFunction, baseIterator);
 				else
 					break;
 			}
@@ -156,7 +156,7 @@ namespace vili
 		for (std::string& complex : getAll(Types::ComplexAttribute))
 		{
 			if (!iterator.over())
-				getComplexAttribute(complex)->walk<T>(walkFunction, iterator);
+				getComplexAttribute(complex).walk<T>(walkFunction, iterator);
 			else
 				break;
 		}

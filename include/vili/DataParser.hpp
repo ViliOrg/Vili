@@ -13,19 +13,19 @@ namespace vili
 		std::vector<std::string> m_flagList;
 		unsigned int m_spacing = 4;
 		std::vector<std::string> m_includes;
-		ComplexAttribute* getPath(std::string path) const;
-		ComplexAttribute* getRootChild(std::string child) const;
+		ComplexAttribute& getPath(std::string path) const;
+		ComplexAttribute& getRootChild(std::string child) const;
 	public:
 		DataParser();
 		DataParser(std::string file);
 		ComplexAttribute* operator->() const;
 		void createFlag(const std::string& flag);
 		ComplexAttribute& operator[](const std::string& cPath) const;
-		ComplexAttribute* at(std::string cPath) const;
+		ComplexAttribute& at(std::string cPath) const;
 		template<class ...Args>
-		ComplexAttribute* at(const std::string& cPath, Args ...pathParts);
+		ComplexAttribute& at(const std::string& cPath, Args ...pathParts);
 		template<class T, class ...Args>
-		T* at(const std::string& cPath, Args ...pathParts);
+		T& at(const std::string& cPath, Args ...pathParts);
 		bool parseFile(const std::string& filename, bool verbose = false, bool visible = true);
 		void writeFile(const std::string& filename, bool verbose = false) const;
 		bool hasFlag(const std::string& flagName) const;
@@ -39,12 +39,12 @@ namespace vili
 	};
 
 	template<class ...Args>
-	ComplexAttribute* DataParser::at(const std::string& cPath, Args ...pathParts)
+	ComplexAttribute& DataParser::at(const std::string& cPath, Args ...pathParts)
 	{
 		return m_root->at(cPath, pathParts...);
 	}
 	template<class T, class ...Args>
-	T* DataParser::at(const std::string& cPath, Args ...pathParts)
+	T& DataParser::at(const std::string& cPath, Args ...pathParts)
 	{
 		return m_root->at<T>(cPath, pathParts...);
 	}

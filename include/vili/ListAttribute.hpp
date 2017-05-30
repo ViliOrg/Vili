@@ -21,7 +21,7 @@ namespace vili
 		ListAttribute(const std::string& id);
 		virtual ~ListAttribute() {}
 		unsigned int size() const;
-		BaseAttribute* get(unsigned int index) const;
+		BaseAttribute& get(unsigned int index) const;
 		std::vector<BaseAttribute*>::iterator begin();
 		std::vector<BaseAttribute*>::iterator end();
 		void push(const std::string& element);
