@@ -57,7 +57,7 @@ Animalia:
 
 ### Generation
 
-`main.cpp`
+`Animalia.cpp`
 
 ```cpp
 #include <iostream>
@@ -128,6 +128,10 @@ int main()
 
 ## Countries and Cities (Lists)
 
+### Vili file
+
+`Countries.vili`
+
 ```
 France:
   cities:["Paris", "Marseille", "Lyon", "Nice"]
@@ -135,6 +139,58 @@ Germany:
   cities:["Berlin", "Hamburg", "Munich", "Cologne"]
 UnitedKingdom:
   cities:["London", "Manchester", "Liverpool", "Glasgow"]
+```
+
+### Generation
+
+`Countries.cpp`
+
+```
+#include <iostream>
+
+#include "Vili.hpp"
+
+using vili::DataParser;
+using vili::ComplexAttribute;
+using vili::ListAttribute;
+
+class Country
+{
+    private:
+        std::string m_name;
+        std::vector<std::string> m_cities;
+    public:
+        Country(const std::string& name, const std::vector<std::string>& cities)
+        {
+            m_name = name;
+            m_cities = cities;
+        }
+        void write(ComplexAttribute& writeInto)
+        {
+            writeInto.createComplexAttribute(m_name);
+            writeInto.at(m_name).createListAttribute("cities");
+            for (const std::string& city : m_cities)
+                writeInto.at<ListAttribute>(m_name, "cities").push(city);
+        }
+};
+
+int main()
+{
+    DataParser file;
+    file.setSpacing(2);
+    ComplexAttribute& root = file.root();
+    std::vector<Country> countries;
+
+    countries.push_back(Country("France", {"Paris", "Marseille", "Lyon", "Nice"}));
+    countries.push_back(Country("Germany", {"Berlin", "Hamburg", "Munich", "Cologne"}));
+    countries.push_back(Country("UnitedKingdom", {"London", "Manchester", "Liverpool", "Glasgow"}));
+
+    for (Country& country : countries)
+        country.write(root);
+    
+    file.writeFile("Countries.vili");
+    return 0;
+}
 ```
 
 ## Little company (Inheritance)
