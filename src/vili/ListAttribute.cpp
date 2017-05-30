@@ -16,10 +16,10 @@ namespace vili
 	{
 		return m_dataList.size();
 	}
-	BaseAttribute* ListAttribute::get(unsigned int index) const
+	BaseAttribute& ListAttribute::get(unsigned int index) const
 	{
 		if (index < m_dataList.size())
-			return m_dataList[index].get();
+			return *m_dataList[index].get();
 		throw aube::ErrorHandler::Raise("Vili.Vili.ListAttribute.WrongIndex", {
 			{ "index", std::to_string(index) },
 			{ "path", getNodePath() },
@@ -108,7 +108,7 @@ namespace vili
 			std::string useID = newid.empty() ? m_id : newid;
 			dynamic_cast<ComplexAttribute*>(newParent)->createListAttribute(useID);
 			for (int i = 0; i < m_dataList.size(); i++)
-				m_dataList[i]->copy(dynamic_cast<ComplexAttribute*>(newParent)->getListAttribute(useID));
+				m_dataList[i]->copy(&dynamic_cast<ComplexAttribute*>(newParent)->getListAttribute(useID));
 		}
 		else
 			throw aube::ErrorHandler::Raise("Vili.Vili.ListAttribute.WrongCopyTarget", { { "path", getNodePath() },{ "target", newParent->getNodePath() } });
@@ -121,7 +121,7 @@ namespace vili
 				(*file) << spacing;
 			(*file) << m_id << ":[" << std::endl;
 			for (unsigned int k = 0; k < size(); k++)
-				this->get(k)->write(file, spacing, depth + 1);
+				this->get(k).write(file, spacing, depth + 1);
 			for (unsigned int l = 0; l < depth - 1; l++)
 				(*file) << spacing;
 			(*file) << "]" << std::endl;

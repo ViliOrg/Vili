@@ -115,7 +115,7 @@ namespace vili
 		else if (newParent->getType() == Types::ComplexAttribute)
 		{
 			dynamic_cast<ComplexAttribute*>(newParent)->createBaseAttribute(newid.empty() ? m_id : newid, m_dataType);
-			BaseAttribute* newCopy = dynamic_cast<ComplexAttribute*>(newParent)->getBaseAttribute(newid.empty() ? m_id : newid);
+			BaseAttribute* newCopy = &dynamic_cast<ComplexAttribute*>(newParent)->getBaseAttribute(newid.empty() ? m_id : newid);
 			if (m_dataType == Types::Int)
 				newCopy->set(Int);
 			else if (m_dataType == Types::Float)

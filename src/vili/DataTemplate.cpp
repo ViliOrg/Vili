@@ -42,11 +42,11 @@ namespace vili
 	{
 		if (checkSignature())
 		{
-			m_body.at("__body__")->copy(parent, id);
+			m_body.at("__body__").copy(parent, id);
 			std::vector<LinkAttribute*> attributeAddresses;
 			for (AttributeConstraintManager& constraintManager : m_signature)
 				attributeAddresses.push_back(constraintManager.getLinkAttribute());
-			parent->getComplexAttribute(id)->walk([attributeAddresses](NodeIterator& complex)
+			parent->getComplexAttribute(id).walk([attributeAddresses](NodeIterator& complex)
 			{
 				for (int i = 0; i < complex->getAll(Types::LinkAttribute).size(); i++)
 				{
@@ -56,13 +56,13 @@ namespace vili
 				{
 					for (int j = 0; j < attributeAddresses.size(); j++)
 					{
-						if ((*complex->getLinkAttribute(complex->getAll(Types::LinkAttribute)[i])) == (*attributeAddresses[j]))
-							complex->getLinkAttribute(complex->getAll(Types::LinkAttribute)[i])->apply();
+						if (complex->getLinkAttribute(complex->getAll(Types::LinkAttribute)[i]) == (*attributeAddresses[j]))
+							complex->getLinkAttribute(complex->getAll(Types::LinkAttribute)[i]).apply();
 					}
 				}
 			});
 			if (m_defaultLinkRoot)
-				parent->at(id)->deleteBaseAttribute("__linkroot__");
+				parent->at(id).deleteBaseAttribute("__linkroot__");
 		}
 		else
 			throw aube::ErrorHandler::Raise("Vili.Vili.DataTemplate.BuildError", { { "element", id },{ "parent", parent->getNodePath() } });

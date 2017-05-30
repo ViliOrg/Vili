@@ -14,7 +14,7 @@ namespace vili
 		std::string linkroot = "";
 		ComplexAttribute* complexParent = dynamic_cast<ComplexAttribute*>(m_parent);
 		if (complexParent->contains(Types::BaseAttribute, "__linkroot__"))
-			linkroot = complexParent->getBaseAttribute("__linkroot__")->get<std::string>();
+			linkroot = complexParent->getBaseAttribute("__linkroot__").get<std::string>();
 		ContainerAttribute* root = this->getParent();
 		while (root->getParent() != nullptr)
 			root = root->getParent();
@@ -27,14 +27,14 @@ namespace vili
 			{
 				ComplexAttribute* complexLocation = static_cast<ComplexAttribute*>(location);
 				if (complexLocation->contains(Types::ComplexAttribute, pathPart))
-					location = complexLocation->getComplexAttribute(pathPart);
+					location = &complexLocation->getComplexAttribute(pathPart);
 				else if (complexLocation->contains(Types::BaseAttribute, pathPart))
 				{
-					location = complexLocation->getBaseAttribute(pathPart);
+					location = &complexLocation->getBaseAttribute(pathPart);
 					break;
 				}
 				else if (complexLocation->contains(Types::ListAttribute, pathPart))
-					location = complexLocation->getListAttribute(pathPart);
+					location = &complexLocation->getListAttribute(pathPart);
 				else
 					throw aube::ErrorHandler::Raise("Vili.Vili.LinkAttribute.WrongLinkPath", { { "path", getNodePath() },{ "target", m_path },{ "pathpart", pathPart } });
 			}
@@ -42,7 +42,7 @@ namespace vili
 			{
 				ListAttribute* listLocation = static_cast<ListAttribute*>(location);
 				if (Functions::String::isStringInt(pathPart) && std::stoi(pathPart) < listLocation->size())
-					location = listLocation->get(std::stoi(pathPart));
+					location = &listLocation->get(std::stoi(pathPart));
 				else
 					throw aube::ErrorHandler::Raise("Vili.Vili.LinkAttribute.WrongLinkListIndex", { { "path", getNodePath() },{ "target", m_path },{ "index", pathPart } });
 			}
@@ -58,7 +58,7 @@ namespace vili
 		std::string linkroot = "";
 		ComplexAttribute* complexParent = dynamic_cast<ComplexAttribute*>(m_parent);
 		if (complexParent->contains(Types::BaseAttribute, "__linkroot__"))
-			linkroot = complexParent->getBaseAttribute("__linkroot__")->get<std::string>();
+			linkroot = complexParent->getBaseAttribute("__linkroot__").get<std::string>();
 		return linkroot + "/" + m_path;
 
 	}

@@ -86,7 +86,7 @@ namespace vili
 	{
 		return m_flagList.at(index);
 	}
-	ComplexAttribute* DataParser::getPath(std::string path) const
+	ComplexAttribute& DataParser::getPath(std::string path) const
 	{
 		if (path.size() > 0 && Functions::String::extract(path, path.size() - 1, 0) == "/")
 			path = Functions::String::extract(path, 0, 1);
@@ -94,21 +94,21 @@ namespace vili
 		{
 			std::vector<std::string> splittedPath = Functions::String::split(path, "/");
 			std::string subPath = Functions::Vector::join(splittedPath, "/", 1);
-			return getPath(Functions::String::split(path, "/")[0])->at(subPath);
+			return getPath(Functions::String::split(path, "/")[0]).at(subPath);
 		}
 		return getRootChild(path);
 	}
-	ComplexAttribute* DataParser::getRootChild(std::string child) const
+	ComplexAttribute& DataParser::getRootChild(std::string child) const
 	{
 		if (child.empty())
-			return m_root.get();
+			return *m_root.get();
 		return m_root->getComplexAttribute(child);
 	}
 	ComplexAttribute& DataParser::operator[](const std::string& cPath) const
 	{
-		return (*getPath(cPath));
+		return getPath(cPath);
 	}
-	ComplexAttribute* DataParser::at(std::string cPath) const
+	ComplexAttribute& DataParser::at(std::string cPath) const
 	{
 		if (cPath.size() > 0 && Functions::String::extract(cPath, cPath.size() - 1, 0) == "/")
 			cPath = Functions::String::extract(cPath, 0, 1);
@@ -237,7 +237,7 @@ namespace vili
 							else if (instructionType == "Template")
 							{
 								if (verbose) std::cout << indenter() << "Creating New Template from : " << instructionValue << std::endl;
-								ComplexAttribute* templateBase = getRootChild(instructionValue);
+								ComplexAttribute* templateBase = &getRootChild(instructionValue);
 								DataTemplate* newTemplate = new DataTemplate(instructionValue);
 								if (templateBase != nullptr)
 								{
@@ -245,25 +245,25 @@ namespace vili
 									{
 										if (!templateBase->contains(Types::BaseAttribute, "__linkroot__"))
 										{
-											templateBase->at("__body__")->createBaseAttribute("__linkroot__", "/" + instructionValue + "/__init__");
+											templateBase->at("__body__").createBaseAttribute("__linkroot__", "/" + instructionValue + "/__init__");
 											newTemplate->useDefaultLinkRoot();
 										}
 
 										int i = 0;
 										while (true)
 										{
-											if (templateBase->at("__init__")->contains(Types::ComplexAttribute, std::to_string(i)))
+											if (templateBase->at("__init__").contains(Types::ComplexAttribute, std::to_string(i)))
 											{
 												AttributeConstraintManager newConstraint(templateBase, instructionValue + "/__init__/" + std::to_string(i) + "/value");
 												std::vector<std::string> requiredTypes;
-												ComplexAttribute* currentArgument = templateBase->at("__init__", std::to_string(i));
-												if (currentArgument->contains(Types::BaseAttribute, "type"))
+												ComplexAttribute& currentArgument = templateBase->at("__init__", std::to_string(i));
+												if (currentArgument.contains(Types::BaseAttribute, "type"))
 													requiredTypes.push_back(
-														currentArgument->getBaseAttribute("type")->get<std::string>()
+														currentArgument.getBaseAttribute("type").get<std::string>()
 													);
 												else {
-													for (unsigned int j = 0; j < currentArgument->getListAttribute("types")->size(); j++) {
-														requiredTypes.push_back(currentArgument->getListAttribute("types")->get(j)->get<std::string>());
+													for (unsigned int j = 0; j < currentArgument.getListAttribute("types").size(); j++) {
+														requiredTypes.push_back(currentArgument.getListAttribute("types").get(j).get<std::string>());
 													}
 												}
 												std::vector<Types::DataType> requiredConstraintTypes;
@@ -274,9 +274,9 @@ namespace vili
 												{
 													return (Functions::Vector::isInList(attribute->getDataType(), requiredConstraintTypes));
 												});
-												if (templateBase->at("__init__", std::to_string(i))->contains(Types::BaseAttribute, "defaultValue"))
+												if (templateBase->at("__init__", std::to_string(i)).contains(Types::BaseAttribute, "defaultValue"))
 												{
-													std::string defaultValue = templateBase->at<BaseAttribute>("__init__", std::to_string(i), "defaultValue")->returnData();
+													std::string defaultValue = templateBase->at<BaseAttribute>("__init__", std::to_string(i), "defaultValue").returnData();
 													newConstraint.addConstraint([defaultValue](BaseAttribute* attribute) -> bool
 													{
 														if (attribute->getAnnotation() != "Set") {
@@ -292,7 +292,7 @@ namespace vili
 												break;
 											i++;
 										}
-										templateBase->at("__body__")->copy(newTemplate->getBody());
+										templateBase->at("__body__").copy(newTemplate->getBody());
 										m_templateList[templateBase->getID()] = newTemplate;
 									}
 									else
@@ -307,13 +307,13 @@ namespace vili
 					{
 						std::vector<std::string> symbolExclusion = { "\"", "#" };
 
-						std::string pushIndicator = getPath(Path(addPath))->getNodePath();
+						std::string pushIndicator = getPath(Path(addPath)).getNodePath();
 
 						if (!Functions::Vector::isInList(parsedLine.substr(0, 1), symbolExclusion) && Functions::String::occurencesInString(parsedLine, ":[") == 1)
 						{
 							std::string listElementID = Functions::String::split(parsedLine, ":")[0];
-							getPath(Path(addPath))->createListAttribute(listElementID);
-							getPath(Path(addPath))->getListAttribute(listElementID)->setVisible(visible);
+							getPath(Path(addPath)).createListAttribute(listElementID);
+							getPath(Path(addPath)).getListAttribute(listElementID).setVisible(visible);
 							curList = listElementID;
 							curListIndent = currentIndent;
 							if (verbose)
@@ -346,14 +346,14 @@ namespace vili
 									});
 								}
 							}
-							getPath(Path(addPath))->createComplexAttribute(complexElementID);
-							getPath(Path(addPath))->getComplexAttribute(complexElementID)->setVisible(visible);
+							getPath(Path(addPath)).createComplexAttribute(complexElementID);
+							getPath(Path(addPath)).getComplexAttribute(complexElementID).setVisible(visible);
 							if (verbose) std::cout << indenter() << "Create ComplexAttribute " << complexElementID << " inside "
 								<< pushIndicator << std::endl;
 							for (unsigned int i = 0; i < complexToHerit.size(); i++)
 							{
 								if (verbose) std::cout << indenter() << "    {Herit from : " << complexToHeritIDList[i] << "}" << std::endl;
-								getPath(Path(addPath))->getComplexAttribute(complexElementID)->heritage(complexToHerit[i]);
+								getPath(Path(addPath)).getComplexAttribute(complexElementID).heritage(complexToHerit[i]);
 							}
 
 							addPath.push_back(complexElementID);
@@ -367,8 +367,8 @@ namespace vili
 
 							if (attributeType == Types::Link)
 							{
-								getPath(Path(addPath))->createLinkAttribute(attributeID, Functions::String::extract(attributeValue, 2, 1));
-								getPath(Path(addPath))->getLinkAttribute(attributeID)->setVisible(visible);
+								getPath(Path(addPath)).createLinkAttribute(attributeID, Functions::String::extract(attributeValue, 2, 1));
+								getPath(Path(addPath)).getLinkAttribute(attributeID).setVisible(visible);
 								if (verbose)
 								{
 									std::cout << indenter() << "Create LinkAttribute " << attributeID << " linking to " << attributeValue
@@ -387,14 +387,14 @@ namespace vili
 									int i = 0;
 									for (std::string& arg : templateArgs)
 									{
-										ComplexAttribute* cArg = getRootChild(templateName)->at("__init__", std::to_string(i));
-										cArg->deleteBaseAttribute("value", true);
-										cArg->createBaseAttribute("value", Types::getVarType(arg), arg);
-										cArg->getBaseAttribute("value")->setAnnotation("Set");
+										ComplexAttribute& cArg = getRootChild(templateName).at("__init__", std::to_string(i));
+										cArg.deleteBaseAttribute("value", true);
+										cArg.createBaseAttribute("value", Types::getVarType(arg), arg);
+										cArg.getBaseAttribute("value").setAnnotation("Set");
 										i++;
 									}
-									m_templateList[templateName]->build(getPath(Path(addPath)), attributeID);
-									getPath(Path(addPath))->getComplexAttribute(attributeID)->useTemplate(m_templateList[templateName]);
+									m_templateList[templateName]->build(&getPath(Path(addPath)), attributeID);
+									getPath(Path(addPath)).getComplexAttribute(attributeID).useTemplate(m_templateList[templateName]);
 
 									if (verbose)
 									{
@@ -407,9 +407,9 @@ namespace vili
 							}
 							else
 							{
-								getPath(Path(addPath))->createBaseAttribute(attributeID, attributeType);
-								getPath(Path(addPath))->getBaseAttribute(attributeID)->setVisible(visible);
-								getPath(Path(addPath))->getBaseAttribute(attributeID)->autoset(attributeValue);
+								getPath(Path(addPath)).createBaseAttribute(attributeID, attributeType);
+								getPath(Path(addPath)).getBaseAttribute(attributeID).setVisible(visible);
+								getPath(Path(addPath)).getBaseAttribute(attributeID).autoset(attributeValue);
 								if (verbose)
 								{
 									std::cout << indenter() << "Create BaseAttribute " << attributeID << "(" << attributeValue;
@@ -421,24 +421,24 @@ namespace vili
 						{
 							std::string attributeValue = parsedLine;
 							Types::DataType attributeType = Types::getVarType(attributeValue);
-							if (verbose) std::cout << indenter() << "Create Element #" << getPath(Path(addPath))->getListAttribute(curList)->size()
+							if (verbose) std::cout << indenter() << "Create Element #" << getPath(Path(addPath)).getListAttribute(curList).size()
 								<< "(" << attributeValue << ") of ListAttribute " << curList << std::endl;
 							if (attributeType == Types::String)
 							{
 								attributeValue = Functions::String::extract(attributeValue, 1, 1);
-								getPath(Path(addPath))->getListAttribute(curList)->push(attributeValue);
+								getPath(Path(addPath)).getListAttribute(curList).push(attributeValue);
 							}
 							else if (attributeType == Types::Int)
 							{
-								getPath(Path(addPath))->getListAttribute(curList)->push(std::stoi(attributeValue));
+								getPath(Path(addPath)).getListAttribute(curList).push(std::stoi(attributeValue));
 							}
 							else if (attributeType == Types::Float)
 							{
-								getPath(Path(addPath))->getListAttribute(curList)->push(std::stod(attributeValue));
+								getPath(Path(addPath)).getListAttribute(curList).push(std::stod(attributeValue));
 							}
 							else if (attributeType == Types::Bool)
 							{
-								getPath(Path(addPath))->getListAttribute(curList)->push(((attributeValue == "True") ? true : false));
+								getPath(Path(addPath)).getListAttribute(curList).push(((attributeValue == "True") ? true : false));
 							}
 							else if (attributeType == Types::Range)
 							{
@@ -450,7 +450,7 @@ namespace vili
 								rEnd += step;
 								for (int i = rStart; i != rEnd; i += step)
 								{
-									getPath(Path(addPath))->getListAttribute(curList)->push(i);
+									getPath(Path(addPath)).getListAttribute(curList).push(i);
 								}
 							}
 							else
