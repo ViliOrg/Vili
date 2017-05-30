@@ -4,8 +4,15 @@ cmake_policy(SET CMP0015 NEW)
 project(vili)
 
 include_directories(include/)
-file(GLOB PG_VILI include/*.hpp)
-file(GLOB HD_VILI src/*.cpp)
+include_directories(include/vili)
+file(GLOB PG_VILI 
+  include/*.hpp
+  include/vili/*.hpp
+)
+file(GLOB HD_VILI 
+  src/*.cpp
+  src/vili/*.cpp
+)
 
 if(CMAKE_COMPILER_IS_GNUCC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -O3")

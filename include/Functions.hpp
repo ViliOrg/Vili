@@ -40,7 +40,7 @@ namespace vili
 			bool isInList(V item, const std::vector<V>& vector);
 			template <typename V>
 			int indexOfElement(V item, const std::vector<V>& vector);
-			std::string join(std::vector<std::string>& vector, const std::string& sep = "", int start = 0, int end = 0);
+			std::string join(const std::vector<std::string>& vector, const std::string& sep = "", int start = 0, int end = 0);
 			template <typename V>
 			void eraseAll(std::vector<V>& vector, V elem);
 			void joinBetween(std::vector<std::string>& vector, const std::string& joinValue, const std::string& sep = "");
@@ -76,7 +76,7 @@ namespace vili
 		inline void Vector::eraseAll(std::vector<V>& vector, V elem)
 		{
 			std::vector<int> toErase;
-			for (int i = 0; i < vector.size(); i++)
+			for (unsigned int i = 0; i < vector.size(); i++)
 			{
 				if (vector.at(i) == elem)
 					toErase.push_back(i);

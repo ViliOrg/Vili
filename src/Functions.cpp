@@ -185,7 +185,7 @@ namespace vili
 		}
 
 		//Functions::Vector
-		std::string Vector::join(std::vector<std::string>& vector, const std::string& sep, int start, int end)
+		std::string Vector::join(const std::vector<std::string>& vector, const std::string& sep, int start, int end)
 		{
 			std::string result = "";
 			if (end >= vector.size())
