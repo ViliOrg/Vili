@@ -59,7 +59,7 @@ Animalia:
 
 `main.cpp`
 
-```
+```cpp
 #include <iostream>
 
 #include "Vili.hpp"
