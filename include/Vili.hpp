@@ -11,6 +11,6 @@
 
 namespace vili
 {
-	void LoadErrors(const std::string& errorFile);
-	std::vector<std::string> convertPath(const std::string& path);
+    void LoadErrors(const std::string& errorFile);
+    std::vector<std::string> convertPath(const std::string& path);
 }
