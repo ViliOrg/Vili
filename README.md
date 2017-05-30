@@ -195,6 +195,10 @@ int main()
 
 ## Little company (Inheritance)
 
+### Vili file
+
+`Employees.vili`
+
 ```
 Employees:
   TeamBusiness:
@@ -212,6 +216,54 @@ Employees:
     name:"Mark Mark"
   Gregory(TeamSupport):
     name:"Gregory No"
+```
+
+### Generation
+
+`Employees.cpp`
+
+```cpp
+#include <iostream>
+
+#include "Vili.hpp"
+
+using vili::DataParser;
+using vili::ComplexAttribute;
+
+int main()
+{
+    DataParser file;
+    file.setSpacing(2);
+    ComplexAttribute& root = file.root();
+    root.createComplexAttribute("Employees");
+    ComplexAttribute& employees = root.at("Employees");
+
+    auto createTeam = [&employees](const std::string& teamName) {
+        employees.createComplexAttribute("Team" + teamName);
+        employees.at("Team" + teamName).createBaseAttribute("team", teamName);
+        employees.at("Team" + teamName).createBaseAttribute("rank", int(employees.getAll().size()));
+    };
+
+    auto createEmployee = [&employees](const std::string& employeeName) {
+        std::string firstName = vili::Functions::String::split(employeeName, " ")[0];
+        employees.createComplexAttribute(firstName);
+        employees.at(firstName).heritage(
+            &employees.at(employees.getAll()[(employees.getAll().size() - 1) % 3])
+        );
+        employees.at(firstName).createBaseAttribute("name", employeeName);
+    };
+
+    createTeam("Business");
+    createTeam("Developpers");
+    createTeam("Support");
+
+    createEmployee("Bob Dupont");
+    createEmployee("Mark Mark");
+    createEmployee("Gregory No");
+    
+    file.writeFile("Employees.vili");
+    return 0;
+}
 ```
 
 ## Colors (Templates)
