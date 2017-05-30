@@ -145,7 +145,7 @@ UnitedKingdom:
 
 `Countries.cpp`
 
-```
+```cpp
 #include <iostream>
 
 #include "Vili.hpp"
