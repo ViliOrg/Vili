@@ -7,6 +7,7 @@
 namespace vili
 {
     class ContainerAttribute;
+
     class Attribute
     {
     protected:
@@ -23,7 +24,10 @@ namespace vili
     public:
         const static Types::AttributeType ClassType = Types::Attribute;
         Attribute(ContainerAttribute* parent, const std::string& id, const Types::AttributeType& type);
-        virtual ~Attribute() {}
+
+        virtual ~Attribute()
+        {
+        }
 
         virtual void setAnnotation(const std::string& annotation);
         virtual std::string getAnnotation() const;

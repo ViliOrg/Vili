@@ -23,9 +23,9 @@ namespace vili
         void createFlag(const std::string& flag);
         ComplexAttribute& operator[](const std::string& cPath) const;
         ComplexAttribute& at(std::string cPath) const;
-        template<class ...Args>
+        template <class ...Args>
         ComplexAttribute& at(const std::string& cPath, Args ...pathParts);
-        template<class T, class ...Args>
+        template <class T, class ...Args>
         T& at(const std::string& cPath, Args ...pathParts);
         bool parseFile(const std::string& filename, bool verbose = false, bool visible = true);
         void generateTemplate(const std::string& templateName);
@@ -40,12 +40,13 @@ namespace vili
         DataTemplate* getTemplate(const std::string& templateId) const;
     };
 
-    template<class ...Args>
+    template <class ...Args>
     ComplexAttribute& DataParser::at(const std::string& cPath, Args ...pathParts)
     {
         return m_root->at(cPath, pathParts...);
     }
-    template<class T, class ...Args>
+
+    template <class T, class ...Args>
     T& DataParser::at(const std::string& cPath, Args ...pathParts)
     {
         return m_root->at<T>(cPath, pathParts...);

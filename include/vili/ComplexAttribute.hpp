@@ -15,6 +15,7 @@ namespace vili
 {
     class LinkAttribute;
     class DataTemplate;
+
     class ComplexAttribute : public ContainerAttribute
     {
     protected:
@@ -30,7 +31,10 @@ namespace vili
         ComplexAttribute(const std::string& id);
         ComplexAttribute(const std::string& id, ComplexAttribute* herit);
         ComplexAttribute(const std::string& id, std::vector<ComplexAttribute*>* multipleHerit);
-        virtual ~ComplexAttribute() {}
+
+        virtual ~ComplexAttribute()
+        {
+        }
 
         Attribute* extractElement(Attribute* element) override;
         void heritage(ComplexAttribute* heritTarget);
@@ -39,11 +43,13 @@ namespace vili
         ComplexAttribute& operator[](const std::string& cPath) const;
 
         ComplexAttribute& at(const std::string& cPath) const;
-        template<class T, class ...Args>
+        template <class T, class ...Args>
         T& at(const std::string& cPath, Args ...pathParts) const;
-        template<class ...Args>
+        template <class ...Args>
         ComplexAttribute& at(const std::string& cPath, Args ...pathParts) const;
-        template<class T> T& at(const std::string& cPath) const { return T(); };
+
+        template <class T>
+        T& at(const std::string& cPath) const { return T(); };
 
         Attribute* get(const std::string& attributeID) const;
         BaseAttribute& getBaseAttribute(const std::string& attributeID) const;
@@ -93,32 +99,42 @@ namespace vili
         DataTemplate* getCurrentTemplate() const;
     };
 
-    template<class ...Args>
+    template <class ...Args>
     ComplexAttribute& ComplexAttribute::at(const std::string& cPath, Args ...pathParts) const
     {
         return getPath(cPath).at(pathParts...);
     }
-    template<class T, class ...Args>
+
+    template <class T, class ...Args>
     T& ComplexAttribute::at(const std::string& cPath, Args ...pathParts) const
     {
         return getPath(cPath).at<T>(pathParts...);
     }
-    template <> inline ComplexAttribute& ComplexAttribute::at<ComplexAttribute>(const std::string& cPath) const
+
+    template <>
+    inline ComplexAttribute& ComplexAttribute::at<ComplexAttribute>(const std::string& cPath) const
     {
         return getComplexAttribute(cPath);
     }
-    template <> inline ListAttribute& ComplexAttribute::at<ListAttribute>(const std::string& cPath) const
+
+    template <>
+    inline ListAttribute& ComplexAttribute::at<ListAttribute>(const std::string& cPath) const
     {
         return getListAttribute(cPath);
     }
-    template <> inline BaseAttribute& ComplexAttribute::at<BaseAttribute>(const std::string& cPath) const
+
+    template <>
+    inline BaseAttribute& ComplexAttribute::at<BaseAttribute>(const std::string& cPath) const
     {
         return getBaseAttribute(cPath);
     }
-    template <> inline LinkAttribute& ComplexAttribute::at<LinkAttribute>(const std::string& cPath) const
+
+    template <>
+    inline LinkAttribute& ComplexAttribute::at<LinkAttribute>(const std::string& cPath) const
     {
         return getLinkAttribute(cPath);
     }
+
     template <class T>
     T ComplexAttribute::walk(std::function<void(NodeValidator<T>&)> walkFunction, bool useCache)
     {
@@ -133,24 +149,22 @@ namespace vili
 
             return baseIterator.result();
         }
-        else
+        NodeValidator<T> baseIterator;
+        for (std::string& complex : getAll(Types::ComplexAttribute))
         {
-            NodeValidator<T> baseIterator;
-            for (std::string& complex : getAll(Types::ComplexAttribute))
-            {
-                if (!baseIterator.over())
-                    getComplexAttribute(complex).walk<T>(walkFunction, baseIterator);
-                else
-                    break;
-            }
             if (!baseIterator.over())
-            {
-                baseIterator.next(this);
-                walkFunction(baseIterator);
-            }
-            return baseIterator.result();
+                getComplexAttribute(complex).walk<T>(walkFunction, baseIterator);
+            else
+                break;
         }
+        if (!baseIterator.over())
+        {
+            baseIterator.next(this);
+            walkFunction(baseIterator);
+        }
+        return baseIterator.result();
     }
+
     template <class T>
     void ComplexAttribute::walk(std::function<void(NodeValidator<T>&)> walkFunction, NodeValidator<T>& iterator)
     {

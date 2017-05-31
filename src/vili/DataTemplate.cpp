@@ -5,10 +5,12 @@ namespace vili
     AttributeConstraintManager::AttributeConstraintManager(ComplexAttribute* parent, std::string path) : m_attribute(parent, "link", path)
     {
     }
+
     void AttributeConstraintManager::addConstraint(std::function<bool(BaseAttribute*)> constraint)
     {
         m_constraints.push_back(constraint);
     }
+
     bool AttributeConstraintManager::checkAllConstraints()
     {
         for (std::function<bool(BaseAttribute*)>& constraint : m_constraints)
@@ -21,10 +23,12 @@ namespace vili
         m_attribute.get<BaseAttribute*>()->setAnnotation("UnSet");
         return true;
     }
+
     LinkAttribute* AttributeConstraintManager::getLinkAttribute()
     {
         return &m_attribute;
     }
+
     std::string AttributeConstraintManager::getArgumentPath() const
     {
         return m_attribute.getFullPath();
@@ -34,10 +38,12 @@ namespace vili
     {
         m_name = name;
     }
+
     ComplexAttribute* DataTemplate::getBody()
     {
         return &m_body;
     }
+
     void DataTemplate::build(ComplexAttribute* parent, const std::string& id)
     {
         if (checkSignature())
@@ -65,8 +71,9 @@ namespace vili
                 parent->at(id).deleteBaseAttribute("__linkroot__");
         }
         else
-            throw aube::ErrorHandler::Raise("Vili.Vili.DataTemplate.BuildError", { { "element", id },{ "parent", parent->getNodePath() } });
+            throw aube::ErrorHandler::Raise("Vili.Vili.DataTemplate.BuildError", {{"element", id},{"parent", parent->getNodePath()}});
     }
+
     bool DataTemplate::checkSignature()
     {
         for (AttributeConstraintManager& constraintManager : m_signature)
@@ -76,6 +83,7 @@ namespace vili
         }
         return true;
     }
+
     void DataTemplate::addConstraintManager(const AttributeConstraintManager& constraintManager, bool facultative)
     {
         if (facultative)
@@ -86,8 +94,9 @@ namespace vili
         else if (!facultative && !m_signatureEnd)
             m_signature.push_back(constraintManager);
         else
-            throw aube::ErrorHandler::Raise("Vili.Vili.DataTemplate.WrongFacultativeParameterOrder", { { "index", std::to_string(m_signature.size()) } });
+            throw aube::ErrorHandler::Raise("Vili.Vili.DataTemplate.WrongFacultativeParameterOrder", {{"index", std::to_string(m_signature.size())}});
     }
+
     void DataTemplate::useDefaultLinkRoot()
     {
         m_defaultLinkRoot = true;

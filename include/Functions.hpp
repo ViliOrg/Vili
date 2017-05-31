@@ -17,23 +17,24 @@ namespace vili
     {
         namespace String
         {
-            std::vector<std::string> split(const std::string &str, const std::string &delimiters = " ");
+            std::vector<std::string> split(const std::string& str, const std::string& delimiters = " ");
             int occurencesInString(const std::string& str, const std::string& occur);
             bool isStringAlpha(const std::string& str);
             bool isStringAlphaNumeric(const std::string& str);
             bool isStringNumeric(const std::string& str);
             bool isStringInt(const std::string& str);
             bool isStringFloat(const std::string& str);
-            void removeCharFromString(std::string &str, std::string charToRemove);
+            void removeCharFromString(std::string& str, std::string charToRemove);
             void replaceStringInPlace(std::string& subject, const std::string& search, const std::string& replace);
-            std::string replaceString(std::string subject, const std::string& search, const std::string &replace);
+            std::string replaceString(std::string subject, const std::string& search, const std::string& replace);
             bool isBetween(const std::string& string, const std::string& bet);
             std::string extract(const std::string& base, int start, int end);
-            std::vector<std::string> extractBetween(std::string &str, char delimiter1, char delimiter2);
+            std::vector<std::string> extractBetween(std::string& str, char delimiter1, char delimiter2);
             typedef std::tuple<std::vector<std::string>, std::vector<std::string>, std::vector<std::pair<int, int>>> StringExtractor;
             StringExtractor extractAllStrings(const std::string& string);
             bool contains(const std::string& string, const std::string& search);
         }
+
         namespace Vector
         {
             template <typename V>
@@ -53,7 +54,7 @@ namespace vili
 
         //Functions::Vector
         template <typename V>
-        inline bool Vector::isInList(V term, const std::vector<V>& list1)
+        bool Vector::isInList(V term, const std::vector<V>& list1)
         {
             for (size_t k = 0; k < list1.size(); k++)
             {
@@ -62,7 +63,8 @@ namespace vili
             }
             return false;
         }
-        template<typename V>
+
+        template <typename V>
         int Vector::indexOfElement(V item, const std::vector<V>& vector)
         {
             for (size_t k = 0; k < vector.size(); k++)
@@ -72,8 +74,9 @@ namespace vili
             }
             return -1;
         }
+
         template <typename V>
-        inline void Vector::eraseAll(std::vector<V>& vector, V elem)
+        void Vector::eraseAll(std::vector<V>& vector, V elem)
         {
             std::vector<int> toErase;
             for (unsigned int i = 0; i < vector.size(); i++)
@@ -84,8 +87,9 @@ namespace vili
             for (int i = toErase.size() - 1; i >= 0; i--)
                 vector.erase(vector.begin() + toErase[i]);
         }
+
         template <typename V>
-        inline int Vector::findSubVector(std::vector<V>& vector, std::vector<V>& find)
+        int Vector::findSubVector(std::vector<V>& vector, std::vector<V>& find)
         {
             int occ = 0;
             int potentialIndex = -1;
@@ -114,8 +118,9 @@ namespace vili
             }
             return potentialIndex;
         }
+
         template <typename V>
-        inline std::vector<V> Vector::getSubVector(const std::vector<V>& vector, int start, int end)
+        std::vector<V> Vector::getSubVector(const std::vector<V>& vector, int start, int end)
         {
             auto first = vector.begin() + start;
             auto last = vector.end() - end;

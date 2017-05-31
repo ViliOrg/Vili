@@ -9,6 +9,7 @@ namespace vili
     {
         m_path = path;
     }
+
     Attribute* LinkAttribute::getTarget()
     {
         std::string linkroot = "";
@@ -36,23 +37,25 @@ namespace vili
                 else if (complexLocation->contains(Types::ListAttribute, pathPart))
                     location = &complexLocation->getListAttribute(pathPart);
                 else
-                    throw aube::ErrorHandler::Raise("Vili.Vili.LinkAttribute.WrongLinkPath", { { "path", getNodePath() },{ "target", m_path },{ "pathpart", pathPart } });
+                    throw aube::ErrorHandler::Raise("Vili.Vili.LinkAttribute.WrongLinkPath", {{"path", getNodePath()},{"target", m_path},{"pathpart", pathPart}});
             }
             else if (location->getType() == Types::ListAttribute)
             {
                 ListAttribute* listLocation = static_cast<ListAttribute*>(location);
-                if (Functions::String::isStringInt(pathPart) && std::stoi(pathPart) < listLocation->size())
-                    location = &listLocation->get(std::stoi(pathPart));
+                if (Functions::String::isStringInt(pathPart) && stoi(pathPart) < listLocation->size())
+                    location = &listLocation->get(stoi(pathPart));
                 else
-                    throw aube::ErrorHandler::Raise("Vili.Vili.LinkAttribute.WrongLinkListIndex", { { "path", getNodePath() },{ "target", m_path },{ "index", pathPart } });
+                    throw aube::ErrorHandler::Raise("Vili.Vili.LinkAttribute.WrongLinkListIndex", {{"path", getNodePath()},{"target", m_path},{"index", pathPart}});
             }
         }
         return location;
     }
+
     std::string LinkAttribute::getPath() const
     {
         return m_path;
     }
+
     std::string LinkAttribute::getFullPath() const
     {
         std::string linkroot = "";
@@ -60,8 +63,8 @@ namespace vili
         if (complexParent->contains(Types::BaseAttribute, "__linkroot__"))
             linkroot = complexParent->getBaseAttribute("__linkroot__").get<std::string>();
         return linkroot + "/" + m_path;
-
     }
+
     void LinkAttribute::apply()
     {
         ComplexAttribute* complexParent = dynamic_cast<ComplexAttribute*>(m_parent);
@@ -76,6 +79,7 @@ namespace vili
         else if (getTarget()->getType() == Types::LinkAttribute)
             dynamic_cast<LinkAttribute*>(getTarget())->copy(complexParent, m_id);
     }
+
     bool LinkAttribute::operator==(const LinkAttribute& compare) const
     {
         return (this->getFullPath() == compare.getFullPath());
@@ -86,8 +90,9 @@ namespace vili
         if (newParent->getType() == Types::ComplexAttribute)
             dynamic_cast<ComplexAttribute*>(newParent)->createLinkAttribute(newid.empty() ? m_id : newid, m_path);
         else
-            throw aube::ErrorHandler::Raise("Vili.Vili.LinkAttribute.WrongCopyTarget", { { "path", getNodePath() },{ "target", newParent->getNodePath() } });
+            throw aube::ErrorHandler::Raise("Vili.Vili.LinkAttribute.WrongCopyTarget", {{"path", getNodePath()},{"target", newParent->getNodePath()}});
     }
+
     void LinkAttribute::write(std::ofstream* file, const std::string& spacing, unsigned int depth) const
     {
         if (m_visible)

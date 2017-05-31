@@ -8,11 +8,12 @@ namespace vili
     namespace Functions
     {
         //Functions::String
-        void String::removeCharFromString(std::string &str, std::string charToRemove)
+        void String::removeCharFromString(std::string& str, std::string charToRemove)
         {
             str.erase(remove(str.begin(), str.end(), charToRemove.c_str()[0]), str.end());
         }
-        std::vector<std::string> String::split(const std::string &str, const std::string &delimiters)
+
+        std::vector<std::string> String::split(const std::string& str, const std::string& delimiters)
         {
             std::vector<std::string> tokens;
             std::string::size_type lastPos = str.find_first_not_of(delimiters, 0);
@@ -25,6 +26,7 @@ namespace vili
             }
             return tokens;
         }
+
         int String::occurencesInString(const std::string& str, const std::string& occur)
         {
             int occurrences = 0;
@@ -36,32 +38,32 @@ namespace vili
             }
             return occurrences;
         }
+
         bool String::isStringAlpha(const std::string& str)
         {
             if (str.size() > 0)
-                return std::all_of(str.begin(), str.end(), ::isalpha);
-            else
-                return false;
+                return all_of(str.begin(), str.end(), isalpha);
+            return false;
         }
+
         bool String::isStringAlphaNumeric(const std::string& str)
         {
             if (str.size() > 0)
-                return std::all_of(str.begin(), str.end(), ::isalnum);
-            else
-                return false;
+                return all_of(str.begin(), str.end(), isalnum);
+            return false;
         }
+
         bool String::isStringInt(const std::string& str)
         {
             if (str.size() > 0)
             {
                 if (str.substr(0, 1) == "-")
-                    return std::all_of(str.begin() + 1, str.end(), ::isdigit);
-                else
-                    return std::all_of(str.begin(), str.end(), ::isdigit);
+                    return all_of(str.begin() + 1, str.end(), isdigit);
+                return all_of(str.begin(), str.end(), isdigit);
             }
-            else
-                return false;
+            return false;
         }
+
         bool String::isStringFloat(const std::string& str)
         {
             std::string floatStr = str;
@@ -70,19 +72,19 @@ namespace vili
             {
                 if (floatStr.substr(0, 1) == "-")
                     floatStr = floatStr.substr(1);
-                if (String::occurencesInString(floatStr, ".") == 1)
+                if (occurencesInString(floatStr, ".") == 1)
                 {
                     isFloat = true;
-                    String::removeCharFromString(floatStr, ".");
+                    removeCharFromString(floatStr, ".");
                 }
-                return (std::all_of(floatStr.begin(), floatStr.end(), ::isdigit) && isFloat);
+                return (all_of(floatStr.begin(), floatStr.end(), isdigit) && isFloat);
             }
-            else
-                return false;
+            return false;
         }
+
         bool String::isStringNumeric(const std::string& str)
         {
-            return (String::isStringFloat(str) || String::isStringInt(str));
+            return (isStringFloat(str) || isStringInt(str));
         }
 
         void String::replaceStringInPlace(std::string& subject, const std::string& search, const std::string& replace)
@@ -94,7 +96,8 @@ namespace vili
                 pos += replace.length();
             }
         }
-        std::string String::replaceString(std::string subject, const std::string& search, const std::string &replace)
+
+        std::string String::replaceString(std::string subject, const std::string& search, const std::string& replace)
         {
             size_t pos = 0;
             while ((pos = subject.find(search, pos)) != std::string::npos)
@@ -104,15 +107,18 @@ namespace vili
             }
             return subject;
         }
+
         bool String::isBetween(const std::string& string, const std::string& bet)
         {
             return (string.substr(0, bet.size()) == bet && string.substr(string.size() - bet.size(), bet.size()) == bet);
         }
+
         std::string String::extract(const std::string& base, int start, int end)
         {
             return base.substr(start, base.size() - start - end);
         }
-        std::vector<std::string> String::extractBetween(std::string &str, char delimiter1, char delimiter2)
+
+        std::vector<std::string> String::extractBetween(std::string& str, char delimiter1, char delimiter2)
         {
             std::vector<std::string> strings;
             int start = 0;
@@ -139,9 +145,10 @@ namespace vili
                 }
             }
             for (unsigned int i = 0; i < strings.size(); i++)
-                String::replaceStringInPlace(str, strings[i], "");
+                replaceStringInPlace(str, strings[i], "");
             return strings;
         }
+
         String::StringExtractor String::extractAllStrings(const std::string& string)
         {
             bool readingString = false;
@@ -177,8 +184,9 @@ namespace vili
                 otherComponents.push_back(currentStack);
                 indexes.push_back(std::pair<int, int>(1, otherComponents.size() - 1));
             }
-            return std::make_tuple(extractedStrings, otherComponents, indexes);
+            return make_tuple(extractedStrings, otherComponents, indexes);
         }
+
         bool String::contains(const std::string& string, const std::string& search)
         {
             return (string.find(search) != std::string::npos);
@@ -201,6 +209,7 @@ namespace vili
             }
             return result;
         }
+
         void Vector::joinBetween(std::vector<std::string>& vector, const std::string& joinValue, const std::string& sep)
         {
             std::string stack = "";
@@ -227,6 +236,7 @@ namespace vili
             for (int i = toErase.size() - 1; i >= 0; i--)
                 vector.erase(vector.begin() + toErase[i]);
         }
+
         void Vector::mergeNeighboors(std::vector<std::string>& vector, const std::string& n1, const std::string& n2, const std::string& sep, bool strict)
         {
             if (vector.size() > 0)
@@ -255,6 +265,5 @@ namespace vili
                     vector.erase(vector.begin() + toErase[i]);
             }
         }
-
     }
 }

@@ -24,12 +24,14 @@ namespace vili
     {
         m_parent = parent;
     }
+
     ComplexAttribute::ComplexAttribute(ComplexAttribute* parent, const std::string& id, ComplexAttribute* herit)
         : ContainerAttribute(parent, id, Types::ComplexAttribute)
     {
         m_parent = parent;
         this->heritage(herit);
     }
+
     ComplexAttribute::ComplexAttribute(ComplexAttribute* parent, const std::string& id, std::vector<ComplexAttribute*>* multipleHerit)
         : ContainerAttribute(parent, id, Types::ComplexAttribute)
     {
@@ -37,19 +39,23 @@ namespace vili
         for (unsigned int i = 0; i < multipleHerit->size(); i++)
             this->heritage(multipleHerit->at(i));
     }
+
     ComplexAttribute::ComplexAttribute(const std::string& id) : ContainerAttribute(nullptr, id, Types::ComplexAttribute)
     {
     }
+
     ComplexAttribute::ComplexAttribute(const std::string& id, ComplexAttribute* herit) : ContainerAttribute(nullptr, id, Types::ComplexAttribute)
     {
         this->heritage(herit);
     }
+
     ComplexAttribute::ComplexAttribute(const std::string& id, std::vector<ComplexAttribute*>* multipleHerit)
         : ContainerAttribute(nullptr, id, Types::ComplexAttribute)
     {
         for (unsigned int i = 0; i < multipleHerit->size(); i++)
             this->heritage(multipleHerit->at(i));
     }
+
     Attribute* ComplexAttribute::extractElement(Attribute* element)
     {
         if (Functions::Vector::isInList(element->getID(), m_childAttributesNames))
@@ -60,8 +66,9 @@ namespace vili
             Functions::Vector::eraseAll(m_childAttributesNames, element->getID());
             return element;
         }
-        throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongExtraction", { { "path", getNodePath() },{ "element", element->getNodePath() } });
+        throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongExtraction", {{"path", getNodePath()},{"element", element->getNodePath()}});
     }
+
     void ComplexAttribute::heritage(ComplexAttribute* heritTarget)
     {
         for (const std::string& child : heritTarget->getAll(Types::Attribute))
@@ -71,18 +78,19 @@ namespace vili
         }
         m_heritFrom.push_back(heritTarget->getID());
     }
+
     ComplexAttribute& ComplexAttribute::operator[](const std::string& cPath) const
     {
         return getPath(cPath);
     }
+
     ComplexAttribute& ComplexAttribute::at(const std::string& cPath) const
     {
         if (cPath.size() > 0 && Functions::String::extract(cPath, cPath.size() - 1, 0) == "/")
             return getPath(Functions::String::extract(cPath, 0, 1));
-        else
-            return getPath(cPath);
-
+        return getPath(cPath);
     }
+
     ComplexAttribute& ComplexAttribute::getPath(std::string attributePath) const
     {
         if (attributePath.size() > 0 && Functions::String::extract(attributePath, attributePath.size() - 1, 0) == "/")
@@ -99,45 +107,49 @@ namespace vili
             }
             return *getToPath;
         }
-        else
-            throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.EmptyPath", { { "path", getNodePath() } });
+        throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.EmptyPath", {{"path", getNodePath()}});
     }
+
     Attribute* ComplexAttribute::get(const std::string& attributeID) const
     {
         if (m_childAttributes.find(attributeID) != m_childAttributes.end())
             return m_childAttributes.at(attributeID).get();
-        throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongGetAttributeKey", { { "attribute", attributeID },{ "path", getNodePath() } });
+        throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongGetAttributeKey", {{"attribute", attributeID},{"path", getNodePath()}});
     }
 
     BaseAttribute& ComplexAttribute::getBaseAttribute(const std::string& attributeID) const
     {
         if (m_childAttributes.find(attributeID) != m_childAttributes.end() && m_childAttributes.at(attributeID)->getType() == Types::BaseAttribute)
             return *static_cast<BaseAttribute*>(m_childAttributes.at(attributeID).get());
-        throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongGetBaseAttributeKey", { { "attribute", attributeID },{ "path", getNodePath() } });
+        throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongGetBaseAttributeKey", {{"attribute", attributeID},{"path", getNodePath()}});
     }
 
     ListAttribute& ComplexAttribute::getListAttribute(const std::string& attributeID) const
     {
         if (m_childAttributes.find(attributeID) != m_childAttributes.end() && m_childAttributes.at(attributeID)->getType() == Types::ListAttribute)
             return *static_cast<ListAttribute*>(m_childAttributes.at(attributeID).get());
-        throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongGetListAttributeKey", { { "attribute", attributeID },{ "path", getNodePath() } });
+        throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongGetListAttributeKey", {{"attribute", attributeID},{"path", getNodePath()}});
     }
+
     LinkAttribute& ComplexAttribute::getLinkAttribute(const std::string& attributeID) const
     {
         if (m_childAttributes.find(attributeID) != m_childAttributes.end() && m_childAttributes.at(attributeID)->getType() == Types::LinkAttribute)
             return *static_cast<LinkAttribute*>(m_childAttributes.at(attributeID).get());
-        throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongGetLinkAttributeKey", { { "attribute", attributeID },{ "path", getNodePath() } });
+        throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongGetLinkAttributeKey", {{"attribute", attributeID},{"path", getNodePath()}});
     }
+
     ComplexAttribute& ComplexAttribute::getComplexAttribute(const std::string& attributeID) const
     {
         if (!m_childAttributes.empty() && m_childAttributes.find(attributeID) != m_childAttributes.end() && m_childAttributes.at(attributeID)->getType() == Types::ComplexAttribute)
             return *static_cast<ComplexAttribute*>(m_childAttributes.at(attributeID).get());
-        throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongGetComplexAttributeKey", { { "attribute", attributeID },{ "path", getNodePath() } });
+        throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongGetComplexAttributeKey", {{"attribute", attributeID},{"path", getNodePath()}});
     }
+
     Types::AttributeType ComplexAttribute::getAttributeType(const std::string& attributeID) const
     {
         return this->get(attributeID)->getType();
     }
+
     std::vector<std::string> ComplexAttribute::getAll(Types::AttributeType searchType) const
     {
         std::vector<std::string> attributes;
@@ -154,20 +166,21 @@ namespace vili
         }
         return attributes;
     }
-    bool ComplexAttribute::contains(Types::AttributeType searchType, const std::string & attributeID) const
+
+    bool ComplexAttribute::contains(Types::AttributeType searchType, const std::string& attributeID) const
     {
         if (m_childAttributes.find(attributeID) != m_childAttributes.end() && m_childAttributes.at(attributeID)->getType() == searchType)
             return true;
-        else
-            return false;
+        return false;
     }
+
     bool ComplexAttribute::contains(const std::string& attributeID) const
     {
         if (m_childAttributes.find(attributeID) != m_childAttributes.end())
             return true;
-        else
-            return false;
+        return false;
     }
+
     void ComplexAttribute::createBaseAttribute(const std::string& attributeID, const Types::DataType& type, const std::string& data)
     {
         m_childAttributes[attributeID] = std::make_unique<BaseAttribute>(this, attributeID, type);
@@ -190,10 +203,12 @@ namespace vili
         if (!Functions::Vector::isInList(attributeID, m_childAttributesNames))
             m_childAttributesNames.push_back(attributeID);
     }
+
     void ComplexAttribute::createBaseAttribute(const std::string& attributeID, const char* data)
     {
         this->createBaseAttribute(attributeID, std::string(data));
     }
+
     void ComplexAttribute::createBaseAttribute(const std::string& attributeID, bool data)
     {
         m_childAttributes[attributeID] = std::make_unique<BaseAttribute>(this, attributeID, Types::Bool);
@@ -201,6 +216,7 @@ namespace vili
         if (!Functions::Vector::isInList(attributeID, m_childAttributesNames))
             m_childAttributesNames.push_back(attributeID);
     }
+
     void ComplexAttribute::createBaseAttribute(const std::string& attributeID, int data)
     {
         m_childAttributes[attributeID] = std::make_unique<BaseAttribute>(this, attributeID, Types::Int);
@@ -208,6 +224,7 @@ namespace vili
         if (!Functions::Vector::isInList(attributeID, m_childAttributesNames))
             m_childAttributesNames.push_back(attributeID);
     }
+
     void ComplexAttribute::createBaseAttribute(const std::string& attributeID, double data)
     {
         m_childAttributes[attributeID] = std::make_unique<BaseAttribute>(this, attributeID, Types::Float);
@@ -215,48 +232,56 @@ namespace vili
         if (!Functions::Vector::isInList(attributeID, m_childAttributesNames))
             m_childAttributesNames.push_back(attributeID);
     }
+
     void ComplexAttribute::pushBaseAttribute(BaseAttribute* attribute)
     {
         m_childAttributes[attribute->getID()] = std::unique_ptr<BaseAttribute>(attribute);
         if (!Functions::Vector::isInList(attribute->getID(), m_childAttributesNames))
             m_childAttributesNames.push_back(attribute->getID());
     }
+
     void ComplexAttribute::createListAttribute(const std::string& attributeID)
     {
         m_childAttributes[attributeID] = std::make_unique<ListAttribute>(this, attributeID);
         if (!Functions::Vector::isInList(attributeID, m_childAttributesNames))
             m_childAttributesNames.push_back(attributeID);
     }
+
     void ComplexAttribute::pushListAttribute(ListAttribute* attribute)
     {
         m_childAttributes[attribute->getID()] = std::unique_ptr<ListAttribute>(attribute);
         if (!Functions::Vector::isInList(attribute->getID(), m_childAttributesNames))
             m_childAttributesNames.push_back(attribute->getID());
     }
+
     void ComplexAttribute::createComplexAttribute(const std::string& attributeID)
     {
         m_childAttributes[attributeID] = std::make_unique<ComplexAttribute>(this, attributeID);
         if (!Functions::Vector::isInList(attributeID, m_childAttributesNames))
             m_childAttributesNames.push_back(attributeID);
     }
+
     void ComplexAttribute::pushComplexAttribute(ComplexAttribute* attribute)
     {
         m_childAttributes[attribute->getID()] = std::unique_ptr<ComplexAttribute>(attribute);
         if (!Functions::Vector::isInList(attribute->getID(), m_childAttributesNames))
             m_childAttributesNames.push_back(attribute->getID());
     }
+
     void ComplexAttribute::createLinkAttribute(const std::string& attributeID, const std::string& path)
     {
         m_childAttributes[attributeID] = std::make_unique<LinkAttribute>(this, attributeID, path);
         if (!Functions::Vector::isInList(attributeID, m_childAttributesNames))
             m_childAttributesNames.push_back(attributeID);
     }
+
     void ComplexAttribute::pushLinkAttribute(LinkAttribute* attribute)
     {
         m_childAttributes[attribute->getID()] = std::unique_ptr<LinkAttribute>(attribute);
         if (!Functions::Vector::isInList(attribute->getID(), m_childAttributesNames))
             m_childAttributesNames.push_back(attribute->getID());
     }
+
     void ComplexAttribute::write(std::ofstream* file, const std::string& spacing, unsigned int depth) const
     {
         if (m_visible && depth > 0)
@@ -275,18 +300,18 @@ namespace vili
                 std::vector<std::string> argsMap(m_template->getArgumentCount());
                 std::string templateName = m_template->getName();
 
-                m_template->getBody()->walk([this, &argsMap, templateName](NodeIterator& node) {
+                m_template->getBody()->walk([this, &argsMap, templateName](NodeIterator& node)
+                {
                     for (const std::string& currentLink : node->getAll(Types::LinkAttribute))
                     {
                         std::vector<std::string> linkParts = Functions::String::split(node->getLinkAttribute(currentLink).getPath(), "/");
                         if (Functions::String::isStringInt(linkParts[linkParts.size() - 2]) && linkParts[linkParts.size() - 1] == "value")
                         {
-                            if (std::stoi(linkParts[linkParts.size() - 2]) <= argsMap.size())
+                            if (stoi(linkParts[linkParts.size() - 2]) <= argsMap.size())
                             {
                                 std::vector<std::string> argPathFragments = Functions::String::split(node->getLinkAttribute(currentLink).getNodePath(), "/");
-                                argsMap[std::stoi(linkParts[linkParts.size() - 2])] = at<BaseAttribute>(Functions::Vector::join(argPathFragments, "/", 2)).returnData();
+                                argsMap[stoi(linkParts[linkParts.size() - 2])] = at<BaseAttribute>(Functions::Vector::join(argPathFragments, "/", 2)).returnData();
                             }
-
                         }
                     }
                 });
@@ -305,6 +330,7 @@ namespace vili
                 (*file) << std::endl;
         }
     }
+
     void ComplexAttribute::deleteBaseAttribute(const std::string& attributeID, bool freeMemory)
     {
         if (Functions::Vector::isInList(attributeID, this->getAll(Types::BaseAttribute)))
@@ -318,6 +344,7 @@ namespace vili
             m_childAttributes.erase(itDel);
         }
     }
+
     void ComplexAttribute::deleteComplexAttribute(const std::string& attributeID, bool freeMemory)
     {
         if (Functions::Vector::isInList(attributeID, this->getAll(Types::ComplexAttribute)))
@@ -331,6 +358,7 @@ namespace vili
             m_childAttributes.erase(itDel);
         }
     }
+
     void ComplexAttribute::deleteListAttribute(const std::string& attributeID, bool freeMemory)
     {
         if (Functions::Vector::isInList(attributeID, this->getAll(Types::ListAttribute)))
@@ -344,6 +372,7 @@ namespace vili
             m_childAttributes.erase(itDel);
         }
     }
+
     void ComplexAttribute::deleteLinkAttribute(const std::string& attributeID, bool freeMemory)
     {
         if (Functions::Vector::isInList(attributeID, this->getAll(Types::LinkAttribute)))
@@ -357,6 +386,7 @@ namespace vili
             m_childAttributes.erase(itDel);
         }
     }
+
     void ComplexAttribute::copy(ContainerAttribute* newParent, const std::string& newid) const
     {
         std::string useID = (newid.empty()) ? this->m_id : newid;
@@ -369,7 +399,7 @@ namespace vili
             }
         }
         else
-            throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongCopyTarget", { { "path", getNodePath() },{ "target", newParent->getNodePath() } });
+            throw aube::ErrorHandler::Raise("Vili.Vili.ComplexAttribute.WrongCopyTarget", {{"path", getNodePath()},{"target", newParent->getNodePath()}});
     }
 
     void ComplexAttribute::walk(std::function<void(NodeIterator&)> walkFunction, bool useCache)

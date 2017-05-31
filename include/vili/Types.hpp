@@ -28,10 +28,10 @@ namespace vili
             Unknown
         };
 
-        Types::DataType stringToDataType(const std::string& type);
-        Types::DataType getVarType(const std::string& var);
-        std::string getDefaultValueForType(Types::DataType type);
-        std::string dataTypeToString(Types::DataType type);
-        std::string attributeTypeToString(Types::AttributeType type);
+        DataType stringToDataType(const std::string& type);
+        DataType getVarType(const std::string& var);
+        std::string getDefaultValueForType(DataType type);
+        std::string dataTypeToString(DataType type);
+        std::string attributeTypeToString(AttributeType type);
     }
 }

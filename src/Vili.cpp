@@ -9,7 +9,8 @@ namespace vili
     {
         DataParser errors(errorFile);
 
-        errors->walk([](NodeIterator& node) -> void {
+        errors->walk([](NodeIterator& node) -> void
+        {
             if (node->contains(Types::BaseAttribute, "message"))
             {
                 std::vector<std::string> location;
@@ -30,7 +31,7 @@ namespace vili
                         currentParent = nullptr;
                 }
                 errorIdParts.pop_back();
-                std::reverse(errorIdParts.begin(), errorIdParts.end());
+                reverse(errorIdParts.begin(), errorIdParts.end());
                 std::string errorId = Functions::Vector::join(errorIdParts, ".");
                 aube::ErrorHandler::Load(errorId, filename, location, message);
             }

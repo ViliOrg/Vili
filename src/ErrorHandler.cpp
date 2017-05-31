@@ -36,6 +36,7 @@ namespace aube
     }
 
     std::map<std::string, ErrorMessage*> ErrorHandler::m_errors = std::map<std::string, ErrorMessage*>();
+
     void ErrorHandler::Load(const std::string& errorId, const std::string& filename, const std::vector<std::string>& location, const std::string& message, const std::vector<std::string>& hints)
     {
         m_errors[errorId] = new ErrorMessage(filename, location, message, hints);

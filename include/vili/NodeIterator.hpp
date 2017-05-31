@@ -5,6 +5,7 @@
 namespace vili
 {
     class ComplexAttribute;
+
     class NodeIterator
     {
     protected:

@@ -19,7 +19,11 @@ namespace vili
         const static Types::AttributeType ClassType = Types::ListAttribute;
         ListAttribute(ContainerAttribute* parent, const std::string& id);
         ListAttribute(const std::string& id);
-        virtual ~ListAttribute() {}
+
+        virtual ~ListAttribute()
+        {
+        }
+
         unsigned int size() const;
         BaseAttribute& get(unsigned int index) const;
         std::vector<BaseAttribute*>::iterator begin();
