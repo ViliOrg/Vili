@@ -1,6 +1,6 @@
 #include <fstream>
 
-#include "vili/DataParser.hpp"
+#include "vili/ViliParser.hpp"
 #include "Functions.hpp"
 
 namespace
@@ -59,50 +59,46 @@ namespace
 
 namespace vili
 {
-    DataParser::DataParser()
+    std::map<std::string, std::unique_ptr<ViliParser>> ViliParser::ViliCache;
+    ViliParser::ViliParser()
     {
-        m_root = std::make_unique<ComplexAttribute>("root");
+        m_root = std::make_unique<ComplexNode>("root");
         m_root->setAnnotation("NoFile");
     }
 
-    DataParser::DataParser(std::string file)
+    ViliParser::ViliParser(const std::string& file)
     {
-        m_root = std::make_unique<ComplexAttribute>("root");
+        m_root = std::make_unique<ComplexNode>("root");
         m_root->setAnnotation("NoFile");
         parseFile(file);
     }
 
-    ComplexAttribute* DataParser::operator->() const
+    ComplexNode* ViliParser::operator->() const
     {
         return m_root.get();
     }
 
-    ComplexAttribute& DataParser::root() const
+    ComplexNode& ViliParser::root() const
     {
         return *m_root.get();
     }
 
-    void DataParser::createFlag(const std::string& flag)
+    void ViliParser::addFlag(const std::string& flag)
     {
         m_flagList.push_back(flag);
     }
 
-    bool DataParser::hasFlag(const std::string& flagName) const
+    bool ViliParser::hasFlag(const std::string& flagName) const
     {
         return find(m_flagList.begin(), m_flagList.end(), flagName) != m_flagList.end();
     }
 
-    unsigned int DataParser::getAmountOfFlags() const
+    std::vector<std::string> ViliParser::getAllFlags() const
     {
-        return m_flagList.size();
+        return m_flagList;
     }
 
-    std::string DataParser::getFlagAtIndex(int index) const
-    {
-        return m_flagList.at(index);
-    }
-
-    ComplexAttribute& DataParser::getPath(std::string path) const
+    ComplexNode& ViliParser::getPath(std::string path) const
     {
         if (path.size() > 0 && Functions::String::extract(path, path.size() - 1, 0) == "/")
             path = Functions::String::extract(path, 0, 1);
@@ -115,35 +111,41 @@ namespace vili
         return getRootChild(path);
     }
 
-    ComplexAttribute& DataParser::getRootChild(std::string child) const
+    ComplexNode& ViliParser::getRootChild(std::string child) const
     {
         if (child.empty())
             return *m_root.get();
-        return m_root->getComplexAttribute(child);
+        return m_root->getComplexNode(child);
     }
 
-    ComplexAttribute& DataParser::operator[](const std::string& cPath) const
+    ComplexNode& ViliParser::operator[](const std::string& cPath) const
     {
         return getPath(cPath);
     }
 
-    ComplexAttribute& DataParser::at(std::string cPath) const
+    ComplexNode& ViliParser::at(const std::string& cPath) const
     {
+        std::string path = cPath;
         if (cPath.size() > 0 && Functions::String::extract(cPath, cPath.size() - 1, 0) == "/")
-            cPath = Functions::String::extract(cPath, 0, 1);
-        return getPath(cPath);
+            path = Functions::String::extract(cPath, 0, 1);
+        return getPath(path);
     }
 
-    bool DataParser::parseFile(const std::string& filename, bool verbose, bool visible)
+    bool ViliParser::parseFile(const std::string& filename, bool verbose, bool visible)
     {
-        std::ifstream useFile;
-        useFile.open(filename);
         m_root->setAnnotation(filename);
+
+        if (CheckCache(this, filename, visible))
+            return true;
+
         std::string currentLine;
         std::vector<std::string> addPath = {};
         std::string curList = "None";
         int curListIndent = 0;
         bool inList = false;
+        std::ifstream useFile;
+        useFile.open(filename);
+
         if (useFile.is_open())
         {
             if (verbose) std::cout << "Start Parsing File : " << filename << std::endl;
@@ -211,7 +213,12 @@ namespace vili
                 for (const std::string& parsedLine : parsedLines)
                 {
                     while (!parsedLine.empty() && currentIndent < addPath.size() && addPath.size() > 0)
+                    {
+                        if (this->checkQuickLookMatches(getPath(Path(addPath)).getRawNodePath()))
+                            return true;
                         addPath.pop_back();
+                    }
+                        
                     std::function<std::string()> indenter = [curList, currentIndent, curListIndent]()
                     {
                         std::string strIndent = "";
@@ -228,7 +235,11 @@ namespace vili
                         return strIndent;
                     };
                     if (curList != "None" && parsedLine == "]")
+                    {
+                        if (this->checkQuickLookMatches(getPath(Path(addPath)).getArrayNode(curList).getRawNodePath()))
+                            return true;
                         curList = "None";
+                    }
                     if (!parsedLine.empty() && currentIndent == 0)
                     {
                         if (parsedLine.substr(parsedLine.size() - 1, 1) == ";")
@@ -268,8 +279,8 @@ namespace vili
                         if (!Functions::Vector::isInList(parsedLine.substr(0, 1), symbolExclusion) && Functions::String::occurencesInString(parsedLine, ":[") == 1)
                         {
                             std::string listElementID = Functions::String::split(parsedLine, ":")[0];
-                            getPath(Path(addPath)).createListAttribute(listElementID);
-                            getPath(Path(addPath)).getListAttribute(listElementID).setVisible(visible);
+                            getPath(Path(addPath)).createArrayNode(listElementID);
+                            getPath(Path(addPath)).getArrayNode(listElementID).setVisible(visible);
                             curList = listElementID;
                             curListIndent = currentIndent;
                             if (verbose)
@@ -281,7 +292,7 @@ namespace vili
                         {
                             std::string complexElementID = parsedLine.substr(0, parsedLine.size() - 1);
                             std::vector<std::string> complexToHeritIDList;
-                            std::vector<ComplexAttribute*> complexToHerit;
+                            std::vector<ComplexNode*> complexToHerit;
                             if (Functions::String::occurencesInString(complexElementID, "(") == 1 &&
                                 Functions::String::occurencesInString(complexElementID, ")") == 1 &&
                                 Functions::String::split(complexElementID, "(").size() == 2)
@@ -294,7 +305,7 @@ namespace vili
                                 {
                                     m_root->walk([currentHerit, &complexToHerit](NodeIterator& node)
                                     {
-                                        if (node->getID() == currentHerit)
+                                        if (node->getId() == currentHerit)
                                         {
                                             complexToHerit.push_back(node.get());
                                             node.terminate();
@@ -302,15 +313,15 @@ namespace vili
                                     });
                                 }
                             }
-                            getPath(Path(addPath)).createComplexAttribute(complexElementID);
-                            getPath(Path(addPath)).getComplexAttribute(complexElementID).setVisible(visible);
+                            getPath(Path(addPath)).createComplexNode(complexElementID);
+                            getPath(Path(addPath)).getComplexNode(complexElementID).setVisible(visible);
                             if (verbose)
                                 std::cout << indenter() << "Create ComplexAttribute " << complexElementID << " inside "
                                     << pushIndicator << std::endl;
                             for (unsigned int i = 0; i < complexToHerit.size(); i++)
                             {
                                 if (verbose) std::cout << indenter() << "    {Herit from : " << complexToHeritIDList[i] << "}" << std::endl;
-                                getPath(Path(addPath)).getComplexAttribute(complexElementID).heritage(complexToHerit[i]);
+                                getPath(Path(addPath)).getComplexNode(complexElementID).heritage(complexToHerit[i]);
                             }
 
                             addPath.push_back(complexElementID);
@@ -320,19 +331,21 @@ namespace vili
                             std::string attributeID = Functions::String::split(parsedLine, ":")[0];
                             std::vector<std::string> splittedLine = Functions::String::split(parsedLine, ":");
                             std::string attributeValue = Functions::Vector::join(splittedLine, ":", 1, 0);
-                            Types::DataType attributeType = Types::getVarType(attributeValue);
+                            DataType attributeType = Types::getVarType(attributeValue);
 
-                            if (attributeType == Types::Link)
+                            if (attributeType == DataType::Link)
                             {
-                                getPath(Path(addPath)).createLinkAttribute(attributeID, Functions::String::extract(attributeValue, 2, 1));
-                                getPath(Path(addPath)).getLinkAttribute(attributeID).setVisible(visible);
+                                getPath(Path(addPath)).createLinkNode(attributeID, Functions::String::extract(attributeValue, 2, 1));
+                                getPath(Path(addPath)).getLinkNode(attributeID).setVisible(visible);
                                 if (verbose)
                                 {
                                     std::cout << indenter() << "Create LinkAttribute " << attributeID << " linking to " << attributeValue
                                         << " inside " << pushIndicator << " (Type:" << attributeType << ")" << std::endl;
                                 }
+                                if (this->checkQuickLookMatches(getPath(Path(addPath)).getLinkNode(attributeID).getRawNodePath()))
+                                    return true;
                             }
-                            else if (attributeType == Types::Template)
+                            else if (attributeType == DataType::Template)
                             {
                                 std::string templateName = attributeValue;
                                 templateName = Functions::String::split(templateName, "(")[0];
@@ -344,61 +357,66 @@ namespace vili
                                     int i = 0;
                                     for (std::string& arg : templateArgs)
                                     {
-                                        ComplexAttribute& cArg = getRootChild(templateName).at("__init__", std::to_string(i));
-                                        cArg.deleteBaseAttribute("value", true);
-                                        cArg.createBaseAttribute("value", Types::getVarType(arg), arg);
-                                        cArg.getBaseAttribute("value").setAnnotation("Set");
+                                        ComplexNode& cArg = getRootChild(templateName).at("__init__", std::to_string(i));
+                                        cArg.removeNode(NodeType::DataNode, "value", true);
+                                        cArg.createDataNode("value", Types::getVarType(arg), arg);
+                                        cArg.getDataNode("value").setAnnotation("Set");
                                         i++;
                                     }
                                     m_templateList[templateName]->build(&getPath(Path(addPath)), attributeID);
-                                    getPath(Path(addPath)).getComplexAttribute(attributeID).useTemplate(m_templateList[templateName]);
+                                    getPath(Path(addPath)).getComplexNode(attributeID).useTemplate(m_templateList[templateName]);
 
                                     if (verbose)
                                     {
                                         std::cout << indenter() << "Create ComplexAttribute " << attributeID << " from Template <" << templateName
                                             << "> inside " << pushIndicator << std::endl;
                                     }
+
+                                    if (this->checkQuickLookMatches(getPath(Path(addPath)).getComplexNode(attributeID).getRawNodePath()))
+                                        return true;
                                 }
                                 else
-                                    throw aube::ErrorHandler::Raise("Vili.Vili.DataParser.UnknownTemplate", {{"template", templateName},{"id", attributeID},{"file", filename}});
+                                    throw aube::ErrorHandler::Raise("Vili.Vili.ViliParser.UnknownTemplate", {{"template", templateName},{"id", attributeID},{"file", filename}});
                             }
                             else
                             {
-                                getPath(Path(addPath)).createBaseAttribute(attributeID, attributeType);
-                                getPath(Path(addPath)).getBaseAttribute(attributeID).setVisible(visible);
-                                getPath(Path(addPath)).getBaseAttribute(attributeID).autoset(attributeValue);
+                                DataNode& newDataNode = getPath(Path(addPath)).createDataNode(attributeID, attributeType);
+                                newDataNode.setVisible(visible);
+                                newDataNode.autoset(attributeValue);
                                 if (verbose)
                                 {
                                     std::cout << indenter() << "Create BaseAttribute " << attributeID << "(" << attributeValue;
                                     std::cout << ") inside " << pushIndicator << " (Type:" << attributeType << ")" << std::endl;
                                 }
+                                if (this->checkQuickLookMatches(newDataNode.getRawNodePath()))
+                                    return true;
                             }
                         }
                         else if (curList != "None")
                         {
                             std::string attributeValue = parsedLine;
-                            Types::DataType attributeType = Types::getVarType(attributeValue);
+                            DataType attributeType = Types::getVarType(attributeValue);
                             if (verbose)
-                                std::cout << indenter() << "Create Element #" << getPath(Path(addPath)).getListAttribute(curList).size()
+                                std::cout << indenter() << "Create Element #" << getPath(Path(addPath)).getArrayNode(curList).size()
                                     << "(" << attributeValue << ") of ListAttribute " << curList << std::endl;
-                            if (attributeType == Types::String)
+                            if (attributeType == DataType::String)
                             {
                                 attributeValue = Functions::String::extract(attributeValue, 1, 1);
-                                getPath(Path(addPath)).getListAttribute(curList).push(attributeValue);
+                                getPath(Path(addPath)).getArrayNode(curList).push(attributeValue);
                             }
-                            else if (attributeType == Types::Int)
+                            else if (attributeType == DataType::Int)
                             {
-                                getPath(Path(addPath)).getListAttribute(curList).push(stoi(attributeValue));
+                                getPath(Path(addPath)).getArrayNode(curList).push(stoi(attributeValue));
                             }
-                            else if (attributeType == Types::Float)
+                            else if (attributeType == DataType::Float)
                             {
-                                getPath(Path(addPath)).getListAttribute(curList).push(stod(attributeValue));
+                                getPath(Path(addPath)).getArrayNode(curList).push(stod(attributeValue));
                             }
-                            else if (attributeType == Types::Bool)
+                            else if (attributeType == DataType::Bool)
                             {
-                                getPath(Path(addPath)).getListAttribute(curList).push(((attributeValue == "True") ? true : false));
+                                getPath(Path(addPath)).getArrayNode(curList).push(((attributeValue == "True") ? true : false));
                             }
-                            else if (attributeType == Types::Range)
+                            else if (attributeType == DataType::Range)
                             {
                                 int rStart = stoi(Functions::String::split(attributeValue, "..")[0]);
                                 int rEnd = stoi(Functions::String::split(attributeValue, "..")[1]);
@@ -408,11 +426,11 @@ namespace vili
                                 rEnd += step;
                                 for (int i = rStart; i != rEnd; i += step)
                                 {
-                                    getPath(Path(addPath)).getListAttribute(curList).push(i);
+                                    getPath(Path(addPath)).getArrayNode(curList).push(i);
                                 }
                             }
                             else
-                                throw aube::ErrorHandler::Raise("Vili.Vili.DataParser.UnknownTypeInList", {{"list", attributeValue},{"file", filename}});
+                                throw aube::ErrorHandler::Raise("Vili.Vili.ViliParser.UnknownTypeInList", {{"list", attributeValue},{"file", filename}});
                         }
                     }
                 }
@@ -422,56 +440,56 @@ namespace vili
             if (verbose) std::cout << "Parsed over.." << std::endl;
             return true;
         }
-        throw aube::ErrorHandler::Raise("Vili.Vili.DataParser.FileNotFound", {{"file", filename}});
+        throw aube::ErrorHandler::Raise("Vili.Vili.ViliParser.FileNotFound", {{"file", filename}});
     }
 
-    void DataParser::generateTemplate(const std::string& templateName, bool visible)
+    void ViliParser::generateTemplate(const std::string& templateName, bool visible)
     {
-        ComplexAttribute* templateBase = &getRootChild(templateName);
-        DataTemplate* newTemplate = new DataTemplate(templateName);
+        ComplexNode* templateBase = &getRootChild(templateName);
+        NodeTemplate* newTemplate =  new NodeTemplate(templateName); 
         if (templateBase != nullptr)
         {
-            if (templateBase->contains(Types::ComplexAttribute, "__init__") && templateBase->contains(Types::ComplexAttribute, "__body__"))
+            if (templateBase->contains(NodeType::ComplexNode, "__init__") && templateBase->contains(NodeType::ComplexNode, "__body__"))
             {
-                if (!templateBase->contains(Types::BaseAttribute, "__linkroot__"))
+                if (!templateBase->contains(NodeType::DataNode, "__linkroot__"))
                 {
-                    templateBase->at("__body__").createBaseAttribute("__linkroot__", "/" + templateName + "/__init__");
-                    templateBase->at<BaseAttribute>("__body__", "__linkroot__").setVisible(false);
+                    templateBase->at("__body__").createDataNode("__linkroot__", "/" + templateName + "/__init__");
+                    templateBase->at<DataNode>("__body__", "__linkroot__").setVisible(false);
                     newTemplate->useDefaultLinkRoot();
                 }
 
                 int i = 0;
                 while (true)
                 {
-                    if (templateBase->at("__init__").contains(Types::ComplexAttribute, std::to_string(i)))
+                    if (templateBase->at("__init__").contains(NodeType::ComplexNode, std::to_string(i)))
                     {
-                        AttributeConstraintManager newConstraint(templateBase, templateName + "/__init__/" + std::to_string(i) + "/value");
+                        NodeConstraintManager newConstraint(templateBase, templateName + "/__init__/" + std::to_string(i) + "/value");
                         std::vector<std::string> requiredTypes;
-                        ComplexAttribute& currentArgument = templateBase->at("__init__", std::to_string(i));
-                        if (currentArgument.contains(Types::BaseAttribute, "type"))
+                        ComplexNode& currentArgument = templateBase->at("__init__", std::to_string(i));
+                        if (currentArgument.contains(NodeType::DataNode, "type"))
                             requiredTypes.push_back(
-                                currentArgument.getBaseAttribute("type").get<std::string>()
+                                currentArgument.getDataNode("type").get<std::string>()
                             );
                         else
                         {
-                            for (unsigned int j = 0; j < currentArgument.getListAttribute("types").size(); j++)
+                            for (unsigned int j = 0; j < currentArgument.getArrayNode("types").size(); j++)
                             {
-                                requiredTypes.push_back(currentArgument.getListAttribute("types").get(j).get<std::string>());
+                                requiredTypes.push_back(currentArgument.getArrayNode("types").get(j).get<std::string>());
                             }
                         }
-                        std::vector<Types::DataType> requiredConstraintTypes;
+                        std::vector<DataType> requiredConstraintTypes;
                         for (std::string& reqType : requiredTypes)
                         {
                             requiredConstraintTypes.push_back(Types::stringToDataType(reqType));
                         }
-                        newConstraint.addConstraint([requiredConstraintTypes](BaseAttribute* attribute) -> bool
+                        newConstraint.addConstraint([requiredConstraintTypes](DataNode* attribute) -> bool
                         {
                             return (Functions::Vector::isInList(attribute->getDataType(), requiredConstraintTypes));
                         });
-                        if (templateBase->at("__init__", std::to_string(i)).contains(Types::BaseAttribute, "defaultValue"))
+                        if (templateBase->at("__init__", std::to_string(i)).contains(NodeType::DataNode, "defaultValue"))
                         {
-                            std::string defaultValue = templateBase->at<BaseAttribute>("__init__", std::to_string(i), "defaultValue").returnData();
-                            newConstraint.addConstraint([defaultValue](BaseAttribute* attribute) -> bool
+                            std::string defaultValue = templateBase->at<DataNode>("__init__", std::to_string(i), "defaultValue").dumpData();
+                            newConstraint.addConstraint([defaultValue](DataNode* attribute) -> bool
                             {
                                 if (attribute->getAnnotation() != "Set")
                                 {
@@ -489,20 +507,20 @@ namespace vili
                 }
                 templateBase->at("__body__").copy(newTemplate->getBody());
                 newTemplate->setVisible(visible);
-                m_templateList[templateBase->getID()] = newTemplate;
+                m_templateList[templateBase->getId()] = newTemplate;
             }
             else
-                throw aube::ErrorHandler::Raise("Vili.Vili.DataParser.TemplateMissingInitOrBody", {{"template", templateName},{"file", m_root->getAnnotation()}});
+                throw aube::ErrorHandler::Raise("Vili.Vili.ViliParser.TemplateMissingInitOrBody", {{"template", templateName},{"file", m_root->getAnnotation()}});
         }
         else
-            throw aube::ErrorHandler::Raise("Vili.Vili.DataParser.WrongTemplateBase", {{"attribute", templateName},{"file", m_root->getAnnotation()}});
+            throw aube::ErrorHandler::Raise("Vili.Vili.ViliParser.WrongTemplateBase", {{"attribute", templateName},{"file", m_root->getAnnotation()}});
     }
 
-    void DataParser::writeFile(const std::string& filename, bool verbose) const
+    void ViliParser::writeFile(const std::string& filename, bool verbose) const
     {
         std::ofstream outFile;
         outFile.open(filename);
-        if (verbose) std::cout << "Writing DataParser's content on file : " << filename << std::endl;
+        if (verbose) std::cout << "Writing ViliParser's content on file : " << filename << std::endl;
         if (m_spacing != 4)
         {
             outFile << "Spacing (" << m_spacing << ");" << std::endl;
@@ -513,15 +531,15 @@ namespace vili
             outFile << "Include (" << include << ");" << std::endl;
             if (verbose) std::cout << "        Add New Include : " << include << std::endl;
         }
-        if (verbose && this->getAmountOfFlags() > 0) std::cout << "    Writing Flags..." << std::endl;
-        for (unsigned int i = 0; i < this->getAmountOfFlags(); i++)
+        if (verbose && m_flagList.size() > 0) std::cout << "    Writing Flags..." << std::endl;
+        for (const std::string& flag : m_flagList)
         {
-            outFile << "Flag (" << this->getFlagAtIndex(i) << ");" << std::endl;
-            if (verbose) std::cout << "        Write New Flag : " << this->getFlagAtIndex(i) << std::endl;
+            outFile << "Flag (" << flag << ");" << std::endl;
+            if (verbose) std::cout << "        Write New Flag : " << flag << std::endl;
         }
 
 
-        if (this->getAmountOfFlags() > 0 || m_spacing != 4 || m_includes.size() > 0) outFile << std::endl;
+        if (m_flagList.size() > 0 || m_spacing != 4 || m_includes.size() > 0) outFile << std::endl;
         std::string writeSpacing = "";
         for (unsigned int i = 0; i < m_spacing; i++)
             writeSpacing += " ";
@@ -530,41 +548,115 @@ namespace vili
         if (m_templateList.size() > 0)
             outFile << std::endl;
 
-        for (std::pair<std::string, DataTemplate*> templatePair : m_templateList)
+        for (auto& templatePair : m_templateList)
         {
             if (templatePair.second->isVisible())
                 outFile << "Template (" << templatePair.first << ");" << std::endl;
         }
-            
 
         outFile.close();
     }
 
-    void DataParser::setSpacing(unsigned int spacing)
+    void ViliParser::setSpacing(unsigned int spacing)
     {
         m_spacing = spacing;
     }
 
-    unsigned DataParser::getSpacing() const
+    unsigned ViliParser::getSpacing() const
     {
         return m_spacing;
     }
 
-    void DataParser::includeFile(const std::string& filename, bool verbose)
+    void ViliParser::includeFile(const std::string& filename, bool verbose)
     {
         m_includes.push_back(filename);
         this->parseFile(filename + ".vili", verbose, false);
     }
 
-    std::vector<std::string> DataParser::getIncludes() const
+    std::vector<std::string> ViliParser::getIncludes() const
     {
         return m_includes;
     }
 
-    DataTemplate* DataParser::getTemplate(const std::string& templateId) const
+    NodeTemplate* ViliParser::getTemplate(const std::string& templateId) const
     {
         if (m_templateList.find(templateId) != m_templateList.end())
             return m_templateList.at(templateId);
-        throw aube::ErrorHandler::Raise("Vili.Vili.DataParser.TemplateNotFound", {{"templateName", templateId}});
+        throw aube::ErrorHandler::Raise("Vili.Vili.ViliParser.TemplateNotFound", {{"templateName", templateId}});
+    }
+
+    std::vector<std::string> ViliParser::getAllTemplates() const
+    {
+        std::vector<std::string> allTemplateNames;
+        for (auto& cTemplate : m_templateList)
+        {
+            allTemplateNames.push_back(cTemplate.first);
+        }
+        return allTemplateNames;
+    }
+
+    void ViliParser::setQuickLookAttributes(const std::vector<std::string>&& qla)
+    {
+        m_quickLook = qla;
+    }
+
+    bool ViliParser::checkQuickLookMatches(const std::string& attributePath)
+    {
+        if (!m_quickLook.empty())
+        {
+            auto splittedPath = Functions::String::split(attributePath, "/");
+            std::string joinedPath;
+            if (splittedPath.size() > 1 && splittedPath[0] == "root")
+            {
+                joinedPath = Functions::Vector::join(splittedPath, "/", 1, 0);
+            }
+            else
+            {
+                joinedPath = attributePath;
+            }
+            
+            if (Functions::Vector::isInList(joinedPath, m_quickLook) && !Functions::Vector::isInList(joinedPath, m_quickLookMatches))
+            {
+                m_quickLookMatches.push_back(joinedPath);
+            }
+            if (m_quickLookMatches.size() == m_quickLook.size())
+            {
+                m_quickLook.clear();
+                m_quickLookMatches.clear();
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
+
+    void ViliParser::StoreInCache(const std::string& path)
+    {
+        ViliCache[path] = std::make_unique<ViliParser>(path);
+    }
+
+    bool ViliParser::CheckCache(ViliParser* parser, const std::string& path, bool visibility)
+    {
+        if (ViliCache.find(path) != ViliCache.end())
+        {
+            ComplexNode& cacheRoot = ViliCache[path]->root();
+            for (const std::string& currentNode : cacheRoot.getAll())
+            {
+                cacheRoot.get(currentNode)->copy(parser->operator->());
+                parser->root().get(currentNode)->setVisible(visibility);
+            }
+            for (const std::string& currentTemplate : ViliCache[path]->getAllTemplates())
+            {
+                parser->generateTemplate(currentTemplate);
+                parser->getTemplate(currentTemplate)->setVisible(visibility);
+            }
+            for (auto& flag : ViliCache[path]->m_flagList)
+                parser->m_flagList.push_back(flag);
+            for (auto& include : ViliCache[path]->m_includes)
+                parser->m_flagList.push_back(include);
+            parser->m_spacing = ViliCache[path]->m_spacing;
+            return true;
+        }
+        return false;
     }
 }
