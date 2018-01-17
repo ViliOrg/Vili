@@ -77,16 +77,12 @@ namespace vili
     void LinkNode::apply()
     {
         ComplexNode* complexParent = dynamic_cast<ComplexNode*>(m_parent);
-        complexParent->removeNode(NodeType::LinkNode, m_id);
+        Node* target = this->getTarget();
 
-        if (getTarget()->getType() == NodeType::ComplexNode)
-            dynamic_cast<ComplexNode*>(getTarget())->copy(complexParent, m_id);
-        else if (getTarget()->getType() == NodeType::ArrayNode)
-            dynamic_cast<ArrayNode*>(getTarget())->copy(complexParent, m_id);
-        else if (getTarget()->getType() == NodeType::DataNode)
-            dynamic_cast<DataNode*>(getTarget())->copy(complexParent, m_id);
-        else if (getTarget()->getType() == NodeType::LinkNode)
-            dynamic_cast<LinkNode*>(getTarget())->copy(complexParent, m_id);
+        complexParent->extractElement(this);
+
+        target->copy(complexParent, m_id);
+        delete this;
     }
 
     bool LinkNode::operator==(const LinkNode& compare) const
@@ -109,16 +105,6 @@ namespace vili
             for (unsigned int j = 0; j < depth - 1; j++)
                 (*file) << spacing;
             (*file) << m_id << ":&(" << getPath() << ")" << std::endl;
-        }
-    }
-
-    void ArrayNode::reorder(int index)
-    {
-        for (int i = index + 1; i < m_dataList.size(); i++)
-        {
-            this->removeOwnership(m_dataList[i].get());
-            m_dataList[i]->setId("#" + std::to_string(i));
-            m_dataList[i]->setParent(this);
         }
     }
 }

@@ -358,12 +358,12 @@ namespace vili
                                     for (std::string& arg : templateArgs)
                                     {
                                         ComplexNode& cArg = getRootChild(templateName).at("__init__", std::to_string(i));
-                                        cArg.removeNode(NodeType::DataNode, "value", true);
+                                        cArg.remove("value");
                                         cArg.createDataNode("value", Types::getVarType(arg), arg);
                                         cArg.getDataNode("value").setAnnotation("Set");
                                         i++;
                                     }
-                                    m_templateList[templateName]->build(&getPath(Path(addPath)), attributeID);
+                                    m_templateList[templateName]->build(&this->getPath(Path(addPath)), attributeID);
                                     getPath(Path(addPath)).getComplexNode(attributeID).useTemplate(m_templateList[templateName]);
 
                                     if (verbose)
@@ -632,7 +632,12 @@ namespace vili
 
     void ViliParser::StoreInCache(const std::string& path)
     {
-        ViliCache[path] = std::make_unique<ViliParser>(path);
+        std::cout << "Storing : " << path << " in Cache" << std::endl;
+        std::unique_ptr<ViliParser> fCache = std::make_unique<ViliParser>();
+        std::cout << "Parsing to fill Cache" << std::endl;
+        fCache->parseFile(path, true);
+        std::cout << "Parsing over" << std::endl;
+        ViliCache[path] = std::move(fCache);
     }
 
     bool ViliParser::CheckCache(ViliParser* parser, const std::string& path, bool visibility)
@@ -640,10 +645,10 @@ namespace vili
         if (ViliCache.find(path) != ViliCache.end())
         {
             ComplexNode& cacheRoot = ViliCache[path]->root();
-            for (const std::string& currentNode : cacheRoot.getAll())
+            for (Node* node : cacheRoot.getAll())
             {
-                cacheRoot.get(currentNode)->copy(parser->operator->());
-                parser->root().get(currentNode)->setVisible(visibility);
+                node->copy(parser->operator->());
+                parser->root().get(node->getId())->setVisible(visibility);
             }
             for (const std::string& currentTemplate : ViliCache[path]->getAllTemplates())
             {
