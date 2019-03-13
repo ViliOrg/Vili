@@ -1,4 +1,4 @@
-# ViliData
+# Vili
 A nice and readable data format !
 
 # Examples :
