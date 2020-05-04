@@ -1,0 +1,100 @@
+name: artifacts
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  release_linux:
+    name: Release Vili Linux package
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create build directory
+      run: mkdir build
+    - name: Aptitude update
+      run: sudo apt-get update
+    - name: Install CMake
+      run: sudo apt-get install -y cmake
+    - name: Install G++ and build-essential
+      run: sudo apt-get install -y build-essential g++
+    - name: Install git
+      run: sudo apt-get install -y git
+    - name: Compile ObEngine
+      run: cd build; cmake -DBUILD_TESTS=ON ..; make -j8
+    - name: Run tests
+      run: ./build/tests/tests
+    #- name: Create package
+    #  run: cp -r engine/ release/; cp ./build/src/Player/ObEnginePlayer release/
+    #- name: Package to archive
+    #  run: tar -cvf vili-dev.tar release/ ; gzip -9 vili-dev.tar
+    #- name: Upload Release Asset
+    #  id: upload-release-asset-linux
+    #  uses: actions/upload-release-asset@v1
+    #  env:
+    #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #  with:
+    #    upload_url: ${{ github.event.release.upload_url }}
+    #    asset_path: ./obengine-dev.tar.gz
+    #    asset_name: obengine-dev.linux64.tar.gz
+    #    asset_content_type: application/zip
+
+
+  release_windows:
+    name: Release Vili Windows package
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create build directory
+      run: mkdir build
+    - name: Run CMake on ObEngine
+      run: cd build; cmake -G "Visual Studio 16 2019" -A x64 -DBUILD_TESTS=ON ..
+      shell: pwsh
+    - name: Compile Vili
+      run: cmake --build build --config Release -- /m:8
+    - name: Run tests
+      run: ./build/tests/Release/tests.exe
+    # - name: Create package
+    #   run: cp -r engine/ release/; cp ./build/src/Player/Release/* ./release/
+    #   shell: pwsh
+    # - name: Package to archive
+    #   run: Compress-Archive -path ./release/* -destinationpath obengine-dev.zip -compressionlevel optimal
+    # - name: Upload Release Asset
+    #   id: upload-release-asset-win
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ github.event.release.upload_url }}
+    #     asset_path: ./obengine-dev.zip
+    #     asset_name: obengine-dev.win64.zip
+    #     asset_content_type: application/zip
+
+
+  release_macos:
+    name: Release Vili MacOS package
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create build directory
+      run: mkdir build
+    - name: Run CMake on ObEngine
+      run: cd build && cmake -DBUILD_TESTS=ON ..
+    - name: Compile Vilu
+      run: cd build && make -j8
+    - name: Run tests
+      run: cd build && ./tests/tests
+    # - name: Create package
+    #   run: cp -r engine/ release/; cp ./build/src/Player/ObEnginePlayer release/
+    # - name: Package to archive
+    #   run: tar -cvf obengine-dev.tar release/ ; gzip -9 obengine-dev.tar
+    # - name: Upload Release Asset
+    #   id: upload-release-asset-macos
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ github.event.release.upload_url }}
+    #     asset_path: ./obengine-dev.tar.gz
+    #     asset_name: obengine-dev.macos64.tar.gz
+    #     asset_content_type: application/zip
