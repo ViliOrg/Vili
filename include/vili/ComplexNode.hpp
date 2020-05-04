@@ -389,10 +389,10 @@ namespace vili
     template <class T>
     void ComplexNode::walk(std::function<void(NodeValidator<T>&)> walkFunction, NodeValidator<T>& iterator)
     {
-        for (std::string& complex : getAll(NodeType::ComplexNode))
+        for (Node* complex : getAll(NodeType::ComplexNode))
         {
             if (!iterator.over())
-                getComplexNode(complex).walk<T>(walkFunction, iterator);
+                getComplexNode(complex->getId()).walk<T>(walkFunction, iterator);
             else
                 break;
         }
