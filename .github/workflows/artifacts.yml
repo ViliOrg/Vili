@@ -20,24 +20,26 @@ jobs:
       run: sudo apt-get install -y build-essential g++
     - name: Install git
       run: sudo apt-get install -y git
-    - name: Compile ObEngine
-      run: cd build; cmake -DBUILD_TESTS=ON ..; make -j8
+    - name: Compile Vili
+      run: cd build; cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON ..; make -j8
     - name: Run tests
       run: ./build/tests/tests
-    #- name: Create package
-    #  run: cp -r engine/ release/; cp ./build/src/Player/ObEnginePlayer release/
-    #- name: Package to archive
-    #  run: tar -cvf vili-dev.tar release/ ; gzip -9 vili-dev.tar
-    #- name: Upload Release Asset
-    #  id: upload-release-asset-linux
-    #  uses: actions/upload-release-asset@v1
-    #  env:
-    #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #  with:
-    #    upload_url: ${{ github.event.release.upload_url }}
-    #    asset_path: ./obengine-dev.tar.gz
-    #    asset_name: obengine-dev.linux64.tar.gz
-    #    asset_content_type: application/zip
+    - name: Create release directory
+      run: mkdir release
+    - name: Create package
+      run: cp -r include/ release/; cp ./build/libvili.a release/
+    - name: Package to archive
+      run: tar -cvf vili-dev.tar release/ ; gzip -9 vili-dev.tar
+    - name: Upload Release Asset
+      id: upload-release-asset-linux
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./vili-dev.tar.gz
+        asset_name: vili-dev.linux64.tar.gz
+        asset_content_type: application/zip
 
 
   release_windows:
@@ -47,28 +49,30 @@ jobs:
     - uses: actions/checkout@v2
     - name: Create build directory
       run: mkdir build
-    - name: Run CMake on ObEngine
+    - name: Run CMake on Vili
       run: cd build; cmake -G "Visual Studio 16 2019" -A x64 -DBUILD_TESTS=ON ..
       shell: pwsh
     - name: Compile Vili
       run: cmake --build build --config Release -- /m:8
     - name: Run tests
       run: ./build/tests/Release/tests.exe
-    # - name: Create package
-    #   run: cp -r engine/ release/; cp ./build/src/Player/Release/* ./release/
-    #   shell: pwsh
-    # - name: Package to archive
-    #   run: Compress-Archive -path ./release/* -destinationpath obengine-dev.zip -compressionlevel optimal
-    # - name: Upload Release Asset
-    #   id: upload-release-asset-win
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ github.event.release.upload_url }}
-    #     asset_path: ./obengine-dev.zip
-    #     asset_name: obengine-dev.win64.zip
-    #     asset_content_type: application/zip
+    - name: Create release directory
+      run: mkdir release
+    - name: Create package
+      run: cp -r include/ release/; cp ./build/Release/vili.lib ./release/
+      shell: pwsh
+    - name: Package to archive
+      run: Compress-Archive -path ./release/* -destinationpath vili-dev.zip -compressionlevel optimal
+    - name: Upload Release Asset
+      id: upload-release-asset-win
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./vili-dev.zip
+        asset_name: vili-dev.win64.zip
+        asset_content_type: application/zip
 
 
   release_macos:
@@ -78,23 +82,25 @@ jobs:
     - uses: actions/checkout@v2
     - name: Create build directory
       run: mkdir build
-    - name: Run CMake on ObEngine
+    - name: Run CMake on Vili
       run: cd build && cmake -DBUILD_TESTS=ON ..
     - name: Compile Vilu
       run: cd build && make -j8
     - name: Run tests
       run: cd build && ./tests/tests
-    # - name: Create package
-    #   run: cp -r engine/ release/; cp ./build/src/Player/ObEnginePlayer release/
-    # - name: Package to archive
-    #   run: tar -cvf obengine-dev.tar release/ ; gzip -9 obengine-dev.tar
-    # - name: Upload Release Asset
-    #   id: upload-release-asset-macos
-    #   uses: actions/upload-release-asset@v1
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   with:
-    #     upload_url: ${{ github.event.release.upload_url }}
-    #     asset_path: ./obengine-dev.tar.gz
-    #     asset_name: obengine-dev.macos64.tar.gz
-    #     asset_content_type: application/zip
+    - name: Create release directory
+      run: mkdir release
+    - name: Create package
+      run: cp -r include/ release/; cp ./build/libvili.a release/
+    - name: Package to archive
+      run: tar -cvf vili-dev.tar release/ ; gzip -9 vili-dev.tar
+    - name: Upload Release Asset
+      id: upload-release-asset-macos
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./vili-dev.tar.gz
+        asset_name: vili-dev.macos64.tar.gz
+        asset_content_type: application/zip

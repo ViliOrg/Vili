@@ -38,7 +38,7 @@ jobs:
     - name: Run CMake on Vili
       run: cd build; cmake -G "Visual Studio 16 2019" -A x64 -DBUILD_TESTS=ON ..
       shell: pwsh
-    - name: Compile ObEngine
+    - name: Compile Vili
       run: cmake --build build --config Release -- /m:8
     # - name: Run tests
     #   run: ./build/tests/Release/tests.exe
