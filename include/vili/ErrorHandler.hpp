@@ -10,7 +10,6 @@ namespace aube
 {
     /**
      * \brief An ErrorMessage Class
-     * @Bind
      */
     class ErrorMessage
     {
@@ -45,7 +44,6 @@ namespace aube
 
     /**
      * \brief Handles Errors in Vili
-     * @Bind
      */
     class ErrorHandler
     {
@@ -70,4 +68,10 @@ namespace aube
 
         static void Warn(const std::string& errorId, const std::map<std::string, std::string>& parameters = {});
     };
+
+    /**
+     * \brief Loads all Aube Errors located in the given path
+     * \param errorFile File where to load Aube Errors
+     */
+    void LoadErrors(const std::string& errorFile);
 }

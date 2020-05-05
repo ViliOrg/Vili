@@ -1,9 +1,9 @@
 #include <fstream>
 
-#include "vili/ComplexNode.hpp"
-#include "vili/NodeTemplate.hpp"
-#include "vili/LinkNode.hpp"
-#include "Functions.hpp"
+#include <ComplexNode.hpp>
+#include <Functions.hpp>
+#include <LinkNode.hpp>
+#include <NodeTemplate.hpp>
 
 namespace
 {

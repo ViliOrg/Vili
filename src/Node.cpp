@@ -1,7 +1,7 @@
-#include "vili/Node.hpp"
-#include "vili/ContainerNode.hpp"
-#include "ErrorHandler.hpp"
-#include "Functions.hpp"
+#include <ContainerNode.hpp>
+#include <ErrorHandler.hpp>
+#include <Functions.hpp>
+#include <Node.hpp>
 
 namespace vili
 {

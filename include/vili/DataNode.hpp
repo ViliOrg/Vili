@@ -2,14 +2,13 @@
 
 #include <variant>
 
-#include "../ErrorHandler.hpp"
-#include "Node.hpp"
+#include <ErrorHandler.hpp>
+#include <Node.hpp>
 
 namespace vili
 {
     /**
      * \brief A terminal Node that contains data (One of the types defined in vili::DataType)
-     * @Bind
      */
     class DataNode : public Node
     {
@@ -142,7 +141,7 @@ namespace vili
         /**
         * \brief Returns the Data contained in the DataNode casted to an unsigned int
         */
-		operator unsigned int() const;
+        operator unsigned int() const;
         /**
         * \brief Returns the Data contained in the DataNode casted to an int
         */

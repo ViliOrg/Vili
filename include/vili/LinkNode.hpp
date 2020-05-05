@@ -2,10 +2,10 @@
 
 #include <string>
 
-#include "DataNode.hpp"
-#include "ComplexNode.hpp"
-#include "ContainerNode.hpp"
-#include "ArrayNode.hpp"
+#include <ArrayNode.hpp>
+#include <ComplexNode.hpp>
+#include <ContainerNode.hpp>
+#include <DataNode.hpp>
 
 namespace vili
 {
@@ -13,7 +13,6 @@ namespace vili
 
     /**
      * \brief A Node that is linked to another one in the Tree
-     * @Bind
      */
     class LinkNode : public Node
     {

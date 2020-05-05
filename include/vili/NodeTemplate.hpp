@@ -1,12 +1,11 @@
 #pragma once
 
-#include "LinkNode.hpp"
+#include <LinkNode.hpp>
 
 namespace vili
 {
     /**
      * \brief Constraints a NodeTemplate parameter
-     * @Bind
      */
     class NodeConstraintManager
     {
@@ -44,7 +43,6 @@ namespace vili
 
     /**
      * \brief Transforms a Node Constructor to a ComplexNode
-     * @Bind
      */
     class NodeTemplate
     {

@@ -1,13 +1,12 @@
 #pragma once
 
-#include "NodeIterator.hpp"
+#include <NodeIterator.hpp>
 
 namespace vili
 {
     /**
      * \brief Almost like the NodeIterator except it should return a result
      * \tparam T Type the NodeValidator should return (validate)
-     * @Bind
      */
     template <class T>
     class NodeValidator : public NodeIterator
