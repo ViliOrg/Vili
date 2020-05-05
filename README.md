@@ -1,6 +1,8 @@
 # Vili
 A nice and readable data format !
 
+![build](https://github.com/Sygmei/Vili/workflows/build/badge.svg)
+
 # Examples :
 
 ## Animals (Simple tree-like structure)
