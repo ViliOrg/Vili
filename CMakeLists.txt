@@ -1,3 +1,5 @@
+cmake_minimum_required(3.1)
+
 project(vili)
 
 file(GLOB VILI_HEADERS include/vili/*.hpp)
