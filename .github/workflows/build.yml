@@ -1,0 +1,59 @@
+name: build
+
+on:
+  push:
+    branches: '*'
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build_linux:
+    name: Build Vili on Linux
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create build directory
+      run: mkdir build
+    - name: Aptitude update
+      run: sudo apt-get update
+    - name: Install CMake
+      run: sudo apt-get install -y cmake
+    - name: Install G++ and build-essential
+      run: sudo apt-get install -y build-essential g++
+    - name: Install git
+      run: sudo apt-get install -y git
+    - name: Compile Vili
+      run: cd build; cmake -DBUILD_TESTS=ON ..; make -j8
+    # - name: Run tests
+    #   run: ./build/tests/tests
+
+
+  build_windows:
+    name: Build Vili on Windows
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create build directory
+      run: mkdir build
+    - name: Run CMake on Vili
+      run: cd build; cmake -G "Visual Studio 16 2019" -A x64 -DBUILD_TESTS=ON ..
+      shell: pwsh
+    - name: Compile Vili
+      run: cmake --build build --config Release -- /m:8
+    # - name: Run tests
+    #   run: ./build/tests/Release/tests.exe
+
+
+  build_macos:
+    name: Build Vili on MacOS
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Create build directory
+      run: mkdir build
+    - name: Run CMake on Vili
+      run: cd build && cmake -DBUILD_TESTS=ON ..
+    - name: Compile Vili
+      run: cd build && make -j8
+    # - name: Run tests
+    #   run: cd build && ./tests/tests

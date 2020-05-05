@@ -63,10 +63,10 @@ namespace vili
          * \param heritTarget ComplexNode to herit from
          */
         void heritage(ComplexNode* heritTarget);
-        
+
         /**
          * \brief Access a ComplexNode child
-         * \param id Id of the ComplexNode child 
+         * \param id Id of the ComplexNode child
          * \return A reference to the ComplexNode child
          */
         ComplexNode& operator[](const std::string& id) const;
@@ -259,7 +259,7 @@ namespace vili
         LinkNode& createLinkNode(const std::string& id, const std::string& path);
         /**
          * \brief Pushes an existing LinkNode in the ComplexNode
-         * \param attribute Pointer to the LinkNode to push to the ComplexNode 
+         * \param attribute Pointer to the LinkNode to push to the ComplexNode
          * \return A reference to the newly pushed LinkNode
          */
         LinkNode& pushLinkNode(LinkNode* attribute);
@@ -267,7 +267,7 @@ namespace vili
         /**
          * \brief Removes a child Node from the ComplexNode
          * \param id Id of the Node to remove
-         * \param freeMemory If equals to true, the DataNode will be erased from memory\n 
+         * \param freeMemory If equals to true, the DataNode will be erased from memory\n
          *                   else it will juste remove the Tree from the tree while keeping the DataNode pointer valid
          */
         void remove(const std::string& id);
@@ -371,10 +371,10 @@ namespace vili
             return baseIterator.result();
         }
         NodeValidator<T> baseIterator;
-        for (std::string& complex : getAll(NodeType::ComplexNode))
+        for (Node* complex : getAll(NodeType::ComplexNode))
         {
             if (!baseIterator.over())
-                getComplexNode(complex).walk<T>(walkFunction, baseIterator);
+                getComplexNode(complex->getId()).walk<T>(walkFunction, baseIterator);
             else
                 break;
         }
@@ -389,10 +389,10 @@ namespace vili
     template <class T>
     void ComplexNode::walk(std::function<void(NodeValidator<T>&)> walkFunction, NodeValidator<T>& iterator)
     {
-        for (std::string& complex : getAll(NodeType::ComplexNode))
+        for (Node* complex : getAll(NodeType::ComplexNode))
         {
             if (!iterator.over())
-                getComplexNode(complex).walk<T>(walkFunction, iterator);
+                getComplexNode(complex->getId()).walk<T>(walkFunction, iterator);
             else
                 break;
         }
