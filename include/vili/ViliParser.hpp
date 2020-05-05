@@ -1,17 +1,16 @@
 #pragma once
 
-#include "ComplexNode.hpp"
-#include "NodeTemplate.hpp"
+#include <ComplexNode.hpp>
+#include <NodeTemplate.hpp>
 
 namespace vili
 {
     /**
      * \brief A Class that can parse .vili files and create a Node Tree
-     * @Bind
      */
     class ViliParser
     {
-    private:
+    protected:
         static std::map<std::string, std::unique_ptr<ViliParser>> ViliCache;
         std::vector<std::string> m_quickLook;
         std::vector<std::string> m_quickLookMatches;

@@ -3,14 +3,13 @@
 #include <vector>
 #include <memory>
 
-#include "DataNode.hpp"
-#include "ContainerNode.hpp"
+#include <ContainerNode.hpp>
+#include <DataNode.hpp>
 
 namespace vili
 {
     /**
      * \brief An ArrayNode is a Node that can contains multiple DataNodes with an index
-     * @Bind
      */
     class ArrayNode : public ContainerNode
     {

@@ -1,12 +1,11 @@
 #pragma once
 
-#include "Node.hpp"
+#include <Node.hpp>
 
 namespace vili
 {
     /**
      * \brief Abstract base class for ArrayNode and ComplexNode (A ContainerNode can contains other nodes)
-     * @Bind
      */
     class ContainerNode : public Node
     {
@@ -19,7 +18,7 @@ namespace vili
          * \brief Creates a new ContainerNode (Abstract Class)
          * \param parent Parent of the ContainedNode
          * \param id Id of the ContainerNode
-         * \param type 
+         * \param type Type of the Node
          */
         ContainerNode(ContainerNode* parent, const std::string& id, const NodeType& type);
         /**

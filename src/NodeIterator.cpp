@@ -1,6 +1,6 @@
-#include "vili/ComplexNode.hpp"
-#include "vili/NodeIterator.hpp"
-#include "ErrorHandler.hpp"
+#include <ComplexNode.hpp>
+#include <ErrorHandler.hpp>
+#include <NodeIterator.hpp>
 
 namespace vili
 {

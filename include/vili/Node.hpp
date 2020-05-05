@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "Types.hpp"
+#include <Types.hpp>
 
 namespace vili
 {
@@ -10,7 +10,6 @@ namespace vili
 
     /**
      * \brief Base Class for every Node in the Tree
-     * @Bind
      */
     class Node
     {
@@ -21,10 +20,8 @@ namespace vili
         ContainerNode* m_parent = nullptr;
         bool m_visible = true;
         virtual void removeParent(ContainerNode* currentParent);
-        virtual ContainerNode* getParent() const;
         friend class ContainerNode;
         friend class LinkNode;
-        friend void LoadErrors(const std::string& errorFile);
     public:
         /**
          * \brief ClassType is redefined for every derived class
@@ -46,6 +43,8 @@ namespace vili
         virtual ~Node()
         {
         }
+
+        ContainerNode* getParent() const;
 
         /**
          * \brief Sets the Node annotation (Little Node description displayed when calling Node::getNodePath())

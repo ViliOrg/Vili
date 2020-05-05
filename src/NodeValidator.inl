@@ -1,5 +1,5 @@
-#include "vili/ComplexNode.hpp"
-#include "vili/NodeValidator.hpp"
+#include <ComplexNode.hpp>
+#include <NodeValidator.hpp>
 
 namespace vili
 {
