@@ -1,5 +1,5 @@
 #include <iterator>
-#include <vili/nodes/node.hpp>
+#include <vili/node.hpp>
 
 namespace vili
 {
