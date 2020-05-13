@@ -1,6 +1,7 @@
 #include <vili/utils.hpp>
 
 #include <algorithm>
+#include <cctype>
 
 namespace vili::utils::string
 {
@@ -21,8 +22,8 @@ namespace vili::utils::string
         if (!str.empty())
         {
             if (str.substr(0, 1) == "-")
-                return std::all_of(str.begin() + 1, str.end(), isdigit);
-            return std::all_of(str.begin(), str.end(), isdigit);
+                return std::all_of(str.begin() + 1, str.end(), std::isdigit);
+            return std::all_of(str.begin(), str.end(), std::isdigit);
         }
         return false;
     }
