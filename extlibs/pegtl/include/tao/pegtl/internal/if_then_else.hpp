@@ -6,56 +6,46 @@
 
 #include "../config.hpp"
 
+#include "enable_control.hpp"
 #include "not_at.hpp"
 #include "seq.hpp"
-#include "skip_control.hpp"
 #include "sor.hpp"
 
 #include "../apply_mode.hpp"
 #include "../rewind_mode.hpp"
+#include "../type_list.hpp"
 
-#include "../analysis/generic.hpp"
-
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   template< typename Cond, typename Then, typename Else >
+   struct if_then_else
    {
-      namespace internal
+      using rule_t = if_then_else;
+      using subs_t = type_list< Cond, Then, Else >;
+
+      template< apply_mode A,
+                rewind_mode M,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class Control,
+                typename ParseInput,
+                typename... States >
+      [[nodiscard]] static bool match( ParseInput& in, States&&... st )
       {
-         template< typename Cond, typename Then, typename Else >
-         struct if_then_else
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::sor, seq< Cond, Then >, seq< not_at< Cond >, Else > >;
+         auto m = in.template mark< M >();
+         using m_t = decltype( m );
 
-            template< apply_mode A,
-                      rewind_mode M,
-                      template< typename... >
-                      class Action,
-                      template< typename... >
-                      class Control,
-                      typename Input,
-                      typename... States >
-            static bool match( Input& in, States&&... st )
-            {
-               auto m = in.template mark< M >();
-               using m_t = decltype( m );
+         if( Control< Cond >::template match< A, rewind_mode::required, Action, Control >( in, st... ) ) {
+            return m( Control< Then >::template match< A, m_t::next_rewind_mode, Action, Control >( in, st... ) );
+         }
+         return m( Control< Else >::template match< A, m_t::next_rewind_mode, Action, Control >( in, st... ) );
+      }
+   };
 
-               if( Control< Cond >::template match< A, rewind_mode::required, Action, Control >( in, st... ) ) {
-                  return m( Control< Then >::template match< A, m_t::next_rewind_mode, Action, Control >( in, st... ) );
-               }
-               return m( Control< Else >::template match< A, m_t::next_rewind_mode, Action, Control >( in, st... ) );
-            }
-         };
+   template< typename Cond, typename Then, typename Else >
+   inline constexpr bool enable_control< if_then_else< Cond, Then, Else > > = false;
 
-         template< typename Cond, typename Then, typename Else >
-         struct skip_control< if_then_else< Cond, Then, Else > > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

@@ -6,61 +6,53 @@
 
 #include "../config.hpp"
 
+#include "enable_control.hpp"
 #include "peek_char.hpp"
-#include "skip_control.hpp"
 
-#include "../analysis/generic.hpp"
+#include "../type_list.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   template< typename Peek >
+   struct any;
+
+   template<>
+   struct any< peek_char >
    {
-      namespace internal
+      using rule_t = any;
+      using subs_t = empty_list;
+
+      template< typename ParseInput >
+      [[nodiscard]] static bool match( ParseInput& in ) noexcept( noexcept( in.empty() ) )
       {
-         template< typename Peek >
-         struct any;
+         if( !in.empty() ) {
+            in.bump();
+            return true;
+         }
+         return false;
+      }
+   };
 
-         template<>
-         struct any< peek_char >
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::any >;
+   template< typename Peek >
+   struct any
+   {
+      using rule_t = any;
+      using subs_t = empty_list;
 
-            template< typename Input >
-            static bool match( Input& in ) noexcept( noexcept( in.empty() ) )
-            {
-               if( !in.empty() ) {
-                  in.bump();
-                  return true;
-               }
-               return false;
-            }
-         };
+      template< typename ParseInput >
+      [[nodiscard]] static bool match( ParseInput& in ) noexcept( noexcept( Peek::peek( in ) ) )
+      {
+         if( const auto t = Peek::peek( in ) ) {
+            in.bump( t.size );
+            return true;
+         }
+         return false;
+      }
+   };
 
-         template< typename Peek >
-         struct any
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::any >;
+   template< typename Peek >
+   inline constexpr bool enable_control< any< Peek > > = false;
 
-            template< typename Input >
-            static bool match( Input& in ) noexcept( noexcept( Peek::peek( in ) ) )
-            {
-               if( const auto t = Peek::peek( in ) ) {
-                  in.bump( t.size );
-                  return true;
-               }
-               return false;
-            }
-         };
-
-         template< typename Peek >
-         struct skip_control< any< Peek > > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

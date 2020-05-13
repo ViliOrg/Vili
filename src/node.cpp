@@ -1,3 +1,4 @@
+#include <iostream>
 #include <iterator>
 #include <vili/node.hpp>
 
@@ -117,6 +118,13 @@ namespace vili
         return false;
     }
 
+    bool node::is_container() const
+    {
+        if (is<array>() || is<object>())
+            return true;
+        return false;
+    }
+
     bool node::is_null() const
     {
         if (m_data.index())
@@ -195,7 +203,24 @@ namespace vili
         }
         else
         {
-            throw exceptions::invalid_cast(array_type, to_string(type()), EXC_INFO);
+            throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
         }
+    }
+
+    node& node::back()
+    {
+        std::cout << "Fuck" << std::endl;
+        if (is<array>())
+        {
+            return std::get<array>(m_data).back();
+        }
+        if (is<object>())
+        {
+            auto& map = std::get<object>(m_data);
+            auto& ref = (map.end() - 1).value();
+            return ref;
+        }
+        throw exceptions::invalid_cast(
+            object_type, to_string(type()), EXC_INFO); // TODO: Add array
     }
 }

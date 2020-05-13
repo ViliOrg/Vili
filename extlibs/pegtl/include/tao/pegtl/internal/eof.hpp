@@ -6,36 +6,27 @@
 
 #include "../config.hpp"
 
-#include "skip_control.hpp"
+#include "enable_control.hpp"
 
-#include "../analysis/generic.hpp"
+#include "../type_list.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   struct eof
    {
-      namespace internal
+      using rule_t = eof;
+      using subs_t = empty_list;
+
+      template< typename ParseInput >
+      [[nodiscard]] static bool match( ParseInput& in ) noexcept( noexcept( in.empty() ) )
       {
-         struct eof
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::opt >;
+         return in.empty();
+      }
+   };
 
-            template< typename Input >
-            static bool match( Input& in ) noexcept( noexcept( in.empty() ) )
-            {
-               return in.empty();
-            }
-         };
+   template<>
+   inline constexpr bool enable_control< eof > = false;
 
-         template<>
-         struct skip_control< eof > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

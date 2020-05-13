@@ -6,22 +6,14 @@
 
 #include "config.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE
 {
-   namespace TAO_PEGTL_NAMESPACE
+   enum class tracking_mode : bool
    {
-      enum class tracking_mode : bool
-      {
-         eager,
-         lazy,
+      eager,
+      lazy
+   };
 
-         // Compatibility, remove with 3.0.0
-         IMMEDIATE = eager,
-         LAZY = lazy
-      };
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE
 
 #endif

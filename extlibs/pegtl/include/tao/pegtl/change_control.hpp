@@ -10,31 +10,27 @@
 #include "nothing.hpp"
 #include "rewind_mode.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE
 {
-   namespace TAO_PEGTL_NAMESPACE
+   template< template< typename... > class NewControl >
+   struct change_control
+      : maybe_nothing
    {
-      template< template< typename... > class NewControl >
-      struct change_control
-         : maybe_nothing
+      template< typename Rule,
+                apply_mode A,
+                rewind_mode M,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class Control,
+                typename ParseInput,
+                typename... States >
+      [[nodiscard]] static bool match( ParseInput& in, States&&... st )
       {
-         template< typename Rule,
-                   apply_mode A,
-                   rewind_mode M,
-                   template< typename... >
-                   class Action,
-                   template< typename... >
-                   class Control,
-                   typename Input,
-                   typename... States >
-         static bool match( Input& in, States&&... st )
-         {
-            return TAO_PEGTL_NAMESPACE::match< Rule, A, M, Action, NewControl >( in, st... );
-         }
-      };
+         return TAO_PEGTL_NAMESPACE::match< Rule, A, M, Action, NewControl >( in, st... );
+      }
+   };
 
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE
 
 #endif

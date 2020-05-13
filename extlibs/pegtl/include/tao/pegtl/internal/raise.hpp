@@ -4,60 +4,41 @@
 #ifndef TAO_PEGTL_INTERNAL_RAISE_HPP
 #define TAO_PEGTL_INTERNAL_RAISE_HPP
 
-#include <cstdlib>
 #include <stdexcept>
-#include <type_traits>
 
 #include "../config.hpp"
 
-#include "skip_control.hpp"
+#include "enable_control.hpp"
 
-#include "../analysis/generic.hpp"
 #include "../apply_mode.hpp"
 #include "../rewind_mode.hpp"
+#include "../type_list.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   template< typename T >
+   struct raise
    {
-      namespace internal
+      using rule_t = raise;
+      using subs_t = empty_list;
+
+      template< apply_mode,
+                rewind_mode,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class Control,
+                typename ParseInput,
+                typename... States >
+      [[noreturn]] static bool match( ParseInput& in, States&&... st )
       {
-         template< typename T >
-         struct raise
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::any >;
+         Control< T >::raise( static_cast< const ParseInput& >( in ), st... );
+      }
+   };
 
-#ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning( disable : 4702 )
-#endif
-            template< apply_mode,
-                      rewind_mode,
-                      template< typename... >
-                      class Action,
-                      template< typename... >
-                      class Control,
-                      typename Input,
-                      typename... States >
-            static bool match( Input& in, States&&... st )
-            {
-               Control< T >::raise( static_cast< const Input& >( in ), st... );
-               throw std::logic_error( "code should be unreachable: Control< T >::raise() did not throw an exception" );  // NOLINT, LCOV_EXCL_LINE
-#ifdef _MSC_VER
-#pragma warning( pop )
-#endif
-            }
-         };
+   template< typename T >
+   inline constexpr bool enable_control< raise< T > > = false;
 
-         template< typename T >
-         struct skip_control< raise< T > > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

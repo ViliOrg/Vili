@@ -4,48 +4,63 @@
 #ifndef TAO_PEGTL_PARSE_ERROR_HPP
 #define TAO_PEGTL_PARSE_ERROR_HPP
 
+#include <ostream>
+#include <sstream>
 #include <stdexcept>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "config.hpp"
 #include "position.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE
 {
-   namespace TAO_PEGTL_NAMESPACE
+   struct parse_error
+      : std::runtime_error
    {
-      struct parse_error
-         : public std::runtime_error
+      template< typename Msg >
+      parse_error( Msg&& msg, std::vector< position > in_positions )
+         : std::runtime_error( std::forward< Msg >( msg ) ),
+           positions( std::move( in_positions ) )
+      {}
+
+      template< typename Msg >
+      parse_error( Msg&& msg, const position& pos )
+         : std::runtime_error( std::forward< Msg >( msg ) ),
+           positions( 1, pos )
+      {}
+
+      template< typename Msg >
+      parse_error( Msg&& msg, position&& pos )
+         : std::runtime_error( std::forward< Msg >( msg ) )
       {
-         parse_error( const std::string& msg, std::vector< position >&& in_positions )
-            : std::runtime_error( msg ),
-              positions( std::move( in_positions ) )
-         {
-         }
+         positions.emplace_back( std::move( pos ) );
+      }
 
-         template< typename Input >
-         parse_error( const std::string& msg, const Input& in )
-            : parse_error( msg, in.position() )
-         {
-         }
+      template< typename Msg, typename ParseInput >
+      parse_error( Msg&& msg, const ParseInput& in )
+         : parse_error( std::forward< Msg >( msg ), in.position() )
+      {}
 
-         parse_error( const std::string& msg, const position& pos )
-            : std::runtime_error( to_string( pos ) + ": " + msg ),
-              positions( 1, pos )
-         {
-         }
+      std::vector< position > positions;
+   };
 
-         parse_error( const std::string& msg, position&& pos )
-            : std::runtime_error( to_string( pos ) + ": " + msg )
-         {
-            positions.emplace_back( std::move( pos ) );
-         }
+   inline std::ostream& operator<<( std::ostream& o, const parse_error& e )
+   {
+      for( auto it = e.positions.rbegin(); it != e.positions.rend(); ++it ) {
+         o << *it << ": ";
+      }
+      return o << e.what();
+   }
 
-         std::vector< position > positions;
-      };
+   [[nodiscard]] inline std::string to_string( const parse_error& e )
+   {
+      std::ostringstream o;
+      o << e;
+      return o.str();
+   }
 
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE
 
 #endif

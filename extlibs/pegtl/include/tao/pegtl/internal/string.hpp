@@ -10,59 +10,49 @@
 #include "../config.hpp"
 
 #include "bump_help.hpp"
+#include "enable_control.hpp"
 #include "result_on_found.hpp"
-#include "skip_control.hpp"
-#include "trivial.hpp"
+#include "success.hpp"
 
-#include "../analysis/counted.hpp"
+#include "../type_list.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   [[nodiscard]] inline bool unsafe_equals( const char* s, const std::initializer_list< char >& l ) noexcept
    {
-      namespace internal
+      return std::memcmp( s, &*l.begin(), l.size() ) == 0;
+   }
+
+   template< char... Cs >
+   struct string;
+
+   template<>
+   struct string<>
+      : success
+   {};
+
+   template< char... Cs >
+   struct string
+   {
+      using rule_t = string;
+      using subs_t = empty_list;
+
+      template< typename ParseInput >
+      [[nodiscard]] static bool match( ParseInput& in ) noexcept( noexcept( in.size( 0 ) ) )
       {
-         inline bool unsafe_equals( const char* s, const std::initializer_list< char >& l ) noexcept
-         {
-            return std::memcmp( s, &*l.begin(), l.size() ) == 0;
-         }
-
-         template< char... Cs >
-         struct string;
-
-         template<>
-         struct string<>
-            : trivial< true >
-         {
-         };
-
-         template< char... Cs >
-         struct string
-         {
-            using analyze_t = analysis::counted< analysis::rule_type::any, sizeof...( Cs ) >;
-
-            template< typename Input >
-            static bool match( Input& in ) noexcept( noexcept( in.size( 0 ) ) )
-            {
-               if( in.size( sizeof...( Cs ) ) >= sizeof...( Cs ) ) {
-                  if( unsafe_equals( in.current(), { Cs... } ) ) {
-                     bump_help< result_on_found::success, Input, char, Cs... >( in, sizeof...( Cs ) );
-                     return true;
-                  }
-               }
-               return false;
+         if( in.size( sizeof...( Cs ) ) >= sizeof...( Cs ) ) {
+            if( unsafe_equals( in.current(), { Cs... } ) ) {
+               bump_help< result_on_found::success, ParseInput, char, Cs... >( in, sizeof...( Cs ) );
+               return true;
             }
-         };
+         }
+         return false;
+      }
+   };
 
-         template< char... Cs >
-         struct skip_control< string< Cs... > > : std::true_type
-         {
-         };
+   template< char... Cs >
+   inline constexpr bool enable_control< string< Cs... > > = false;
 
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

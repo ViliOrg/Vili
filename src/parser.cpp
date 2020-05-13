@@ -6,7 +6,7 @@
 #include <stack>
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/contrib/parse_tree.hpp>
-#include <tao/pegtl/contrib/tracer.hpp>
+#include <tao/pegtl/contrib/trace.hpp>
 
 namespace peg = tao::pegtl;
 using namespace std::string_literals;
@@ -18,7 +18,7 @@ namespace vili::parser
         // clang-format off
         struct identifier : peg::identifier {};
         struct indent : peg::seq<peg::bol, peg::star<peg::blank>> {};
-        struct affectation : peg::must<identifier, peg::pad<peg::one<':'>, peg::blank>> {};
+        struct affectation : peg::seq<identifier, peg::pad<peg::one<':'>, peg::blank>> {};
 
         // String
         struct string : peg::seq<peg::one<'"'>, peg::star<peg::not_one<'"'>>, peg::one<'"'>> {};
@@ -37,7 +37,10 @@ namespace vili::parser
         struct data : peg::sor<boolean, number, integer, string> {};
 
         // Arrays
-        struct array_elements : peg::list<data, peg::one<','>, peg::blank> {};
+        struct array;
+        struct brace_based_object;
+        struct array_element : peg::sor<boolean, number, integer, string, array, brace_based_object> {};
+        struct array_elements : peg::list<array_element, peg::one<','>, peg::space> {};
         struct open_array : peg::one<'['> {};
         struct close_array : peg::one<']'> {};
         struct array : peg::seq<open_array, peg::pad_opt<array_elements, peg::space>, close_array> {};
@@ -52,9 +55,14 @@ namespace vili::parser
         struct brace_based_object : peg::seq<open_object, peg::pad_opt<object_elements, peg::space>, close_object> {};
         struct object : peg::sor<brace_based_object, indent_based_object> {};
 
+        // Comments
+        struct inline_comment : peg::seq<peg::one<'#'>, peg::until<peg::eol, peg::any>> {};
+
         // Nodes
         struct node : peg::seq<affectation, peg::sor<data, array, object>> {};
-        struct line : peg::seq<indent, node, peg::opt<peg::eol>> {};
+        struct full_node : peg::seq<indent, node, peg::opt<peg::eol>> {};
+        struct empty_line : peg::seq<peg::star<peg::blank>, peg::eol> {};
+        struct line : peg::sor<empty_line, inline_comment, full_node> {};
         struct grammar : peg::until<peg::eof, peg::must<line>> {};
         // clang-format on
     }
@@ -75,7 +83,7 @@ namespace vili::parser
         void set_active_identifier(const std::string& identifier);
         void open_block();
         void close_block();
-        template <class vili_type> void push(vili_type data);
+        void push(node data);
     };
 
     state::state()
@@ -130,30 +138,45 @@ namespace vili::parser
 
     void state::open_block()
     {
-        // std::cout << "Opening block with identifier " << m_identifier << std::endl;
+        std::cout << "Opening block with identifier " << m_identifier << std::endl;
         m_stack.top().first->insert(m_identifier, node {});
         m_stack.push(std::make_pair(&m_stack.top().first->operator[](m_identifier), 0));
-        // std::cout << "======== STACK OPEN : " << m_stack.size() << std::endl;
+        std::cout << "======================================== STACK OPEN : "
+                  << m_stack.size() << std::endl;
     }
 
     void state::close_block()
     {
         m_stack.pop();
-        // std::cout << "======== STACK EXIT : " << m_stack.size() << std::endl;
+        std::cout << "======================================== STACK EXIT : "
+                  << m_stack.size() << std::endl;
     }
 
-    template <class vili_type> void state::push(vili_type data)
+    void state::push(node data)
     {
-        if (m_stack.top().first->type() == vili::node_type::array)
+        std::cout << "State::push in " << to_string(m_stack.top().first->type())
+                  << std::endl;
+        if (m_stack.top().first->is<array>())
         {
+            std::cout << "Push in array" << std::endl;
             m_stack.top().first->push(data);
+        }
+        else if (m_stack.top().first->is<object>())
+        {
+            std::cout << "Push in object" << std::endl;
+            m_stack.top().first->insert(m_identifier, data);
         }
         else
         {
-            *m_stack.top().first = data;
-            if (m_stack.top().first->is_primitive())
-                m_stack.pop();
-            // std::cout << "stack size : " << m_stack.size() << std::endl;
+            throw std::runtime_error("Should not happen");
+        }
+        if (data.is_container())
+        {
+            m_stack.push(std::make_pair(&m_stack.top().first->back(), 0));
+            std::cout << "======================================== STACK OPEN : "
+                      << m_stack.size() << std::endl;
+            std::cout << "On top of stack is : " << m_stack.top().first->dump()
+                      << std::endl;
         }
     }
 
@@ -165,7 +188,7 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            // std::cout << "Found quote : " << in.string() << std::endl;
+            std::cout << "Found quote : " << in.string() << std::endl;
             auto content = in.string();
             state.push(content.substr(1, content.size() - 2));
         }
@@ -175,7 +198,7 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            // std::cout << "Found float : " << in.string() << std::endl;
+            std::cout << "Found float : " << in.string() << std::endl;
             state.push(std::stod(in.string()));
         }
     };
@@ -184,7 +207,7 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            // std::cout << "Found integer : " << in.string() << std::endl;
+            std::cout << "Found integer : " << in.string() << std::endl;
             state.push(std::stoll(in.string()));
         }
     };
@@ -193,25 +216,25 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            // std::cout << "Found boolean : " << in.string() << std::endl;
+            std::cout << "Found boolean : " << in.string() << std::endl;
             state.push((in.string() == "true" ? true : false));
         }
     };
 
-    template <> struct action<rules::affectation>
+    /*template <> struct action<rules::affectation>
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            // std::cout << "Found affectation : " << in.string() << std::endl;
+            std::cout << "Found affectation : " << in.string() << std::endl;
             state.open_block();
         }
-    };
+    };*/
 
     template <> struct action<rules::identifier>
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            // std::cout << "Found identifier : " << in.string() << std::endl;
+            std::cout << "Found identifier : " << in.string() << std::endl;
             state.set_active_identifier(in.string());
         }
     };
@@ -220,7 +243,7 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            // std::cout << "Opening array : " << in.string() << std::endl;
+            std::cout << "Opening array : " << in.string() << std::endl;
             state.push(vili::array {});
         }
     };
@@ -229,7 +252,7 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            // std::cout << "Closing array : " << in.string() << std::endl;
+            std::cout << "Closing array : " << in.string() << std::endl;
             state.close_block();
         }
     };
@@ -238,7 +261,7 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            // std::cout << "Opening object : " << in.string() << std::endl;
+            std::cout << "Opening object : " << in.string() << std::endl;
             state.push(vili::object {});
         }
     };
@@ -247,7 +270,7 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            // std::cout << "Closing object : " << in.string() << std::endl;
+            std::cout << "Closing object : " << in.string() << std::endl;
             state.close_block();
         }
     };
@@ -256,7 +279,7 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            // std::cout << "Opening [via indent] object : " << in.string() << std::endl;
+            std::cout << "Opening [via indent] object : " << in.string() << std::endl;
             state.push(vili::object {});
             state.use_indent();
         }
@@ -266,7 +289,7 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            // std::cout << "Set indent level to " << in.string().size() << std::endl;
+            std::cout << "Set indent level to " << in.string().size() << std::endl;
             state.set_indent(in.string().size());
         }
     };
@@ -275,11 +298,14 @@ namespace vili::parser
     {
         state parser_state;
         peg::string_input in(data, "string_source");
+        std::cout << "Parsing : " << data << std::endl;
 
         try
         {
             peg::parse<vili::parser::rules::grammar, vili::parser::action>(
                 in, parser_state);
+            /*peg::standard_trace<vili::parser::rules::grammar, vili::parser::action>(
+                in, parser_state);*/
         }
         catch (peg::parse_error& e)
         {
@@ -288,12 +314,17 @@ namespace vili::parser
                       << in.line_at(p) << '\n'
                       << std::setw(p.byte_in_line) << ' ' << '^' << std::endl;
         }
+        /*catch (vili::exceptions::base_exception& e)
+        {
+            std::cerr << "vili::exception : " << e.what() << std::endl;
+        }*/
 
         return parser_state.root;
     }
 
     vili::node from_file(std::string_view path)
     {
+        // TODO: File not found exception
         std::ifstream input_file;
         input_file.open(path.data());
         std::stringstream buffer;

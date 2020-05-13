@@ -6,53 +6,42 @@
 
 #include "../config.hpp"
 
+#include "enable_control.hpp"
 #include "must.hpp"
-#include "skip_control.hpp"
-#include "trivial.hpp"
 
 #include "../apply_mode.hpp"
 #include "../rewind_mode.hpp"
+#include "../type_list.hpp"
 
-#include "../analysis/counted.hpp"
-
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   template< bool Default, typename Cond, typename... Rules >
+   struct if_must
    {
-      namespace internal
+      using rule_t = if_must;
+      using subs_t = type_list< Cond, must< Rules... > >;
+
+      template< apply_mode A,
+                rewind_mode M,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class Control,
+                typename ParseInput,
+                typename... States >
+      [[nodiscard]] static bool match( ParseInput& in, States&&... st )
       {
-         template< bool Default, typename Cond, typename... Rules >
-         struct if_must
-         {
-            using analyze_t = analysis::counted< analysis::rule_type::seq, Default ? 0 : 1, Cond, must< Rules... > >;
+         if( Control< Cond >::template match< A, M, Action, Control >( in, st... ) ) {
+            (void)Control< must< Rules... > >::template match< A, M, Action, Control >( in, st... );
+            return true;
+         }
+         return Default;
+      }
+   };
 
-            template< apply_mode A,
-                      rewind_mode M,
-                      template< typename... >
-                      class Action,
-                      template< typename... >
-                      class Control,
-                      typename Input,
-                      typename... States >
-            static bool match( Input& in, States&&... st )
-            {
-               if( Control< Cond >::template match< A, M, Action, Control >( in, st... ) ) {
-                  Control< must< Rules... > >::template match< A, M, Action, Control >( in, st... );
-                  return true;
-               }
-               return Default;
-            }
-         };
+   template< bool Default, typename Cond, typename... Rules >
+   inline constexpr bool enable_control< if_must< Default, Cond, Rules... > > = false;
 
-         template< bool Default, typename Cond, typename... Rules >
-         struct skip_control< if_must< Default, Cond, Rules... > > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

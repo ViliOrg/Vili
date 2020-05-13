@@ -11,53 +11,19 @@
 
 #include "result_on_found.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   template< result_on_found R, typename ParseInput, typename Char, Char... Cs >
+   void bump_help( ParseInput& in, const std::size_t count ) noexcept
    {
-      namespace internal
-      {
-         template< bool >
-         struct bump_impl;
+      if constexpr( ( ( Cs != ParseInput::eol_t::ch ) && ... ) != bool( R ) ) {
+         in.bump( count );
+      }
+      else {
+         in.bump_in_this_line( count );
+      }
+   }
 
-         template<>
-         struct bump_impl< true >
-         {
-            template< typename Input >
-            static void bump( Input& in, const std::size_t count ) noexcept
-            {
-               in.bump( count );
-            }
-         };
-
-         template<>
-         struct bump_impl< false >
-         {
-            template< typename Input >
-            static void bump( Input& in, const std::size_t count ) noexcept
-            {
-               in.bump_in_this_line( count );
-            }
-         };
-
-         template< bool... >
-         struct bool_list
-         {
-         };
-
-         template< bool... Bs >
-         using bool_and = std::is_same< bool_list< Bs..., true >, bool_list< true, Bs... > >;
-
-         template< result_on_found R, typename Input, typename Char, Char... Cs >
-         void bump_help( Input& in, const std::size_t count ) noexcept
-         {
-            bump_impl< bool_and< ( Cs != Input::eol_t::ch )... >::value != bool( R ) >::bump( in, count );
-         }
-
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

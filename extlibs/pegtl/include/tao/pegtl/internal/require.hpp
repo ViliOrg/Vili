@@ -6,47 +6,37 @@
 
 #include "../config.hpp"
 
-#include "skip_control.hpp"
-#include "trivial.hpp"
+#include "enable_control.hpp"
+#include "success.hpp"
 
-#include "../analysis/generic.hpp"
+#include "../type_list.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   template< unsigned Amount >
+   struct require;
+
+   template<>
+   struct require< 0 >
+      : success
+   {};
+
+   template< unsigned Amount >
+   struct require
    {
-      namespace internal
+      using rule_t = require;
+      using subs_t = empty_list;
+
+      template< typename ParseInput >
+      [[nodiscard]] static bool match( ParseInput& in ) noexcept( noexcept( in.size( 0 ) ) )
       {
-         template< unsigned Amount >
-         struct require;
+         return in.size( Amount ) >= Amount;
+      }
+   };
 
-         template<>
-         struct require< 0 >
-            : trivial< true >
-         {
-         };
+   template< unsigned Amount >
+   inline constexpr bool enable_control< require< Amount > > = false;
 
-         template< unsigned Amount >
-         struct require
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::opt >;
-
-            template< typename Input >
-            static bool match( Input& in ) noexcept( noexcept( in.size( 0 ) ) )
-            {
-               return in.size( Amount ) >= Amount;
-            }
-         };
-
-         template< unsigned Amount >
-         struct skip_control< require< Amount > > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

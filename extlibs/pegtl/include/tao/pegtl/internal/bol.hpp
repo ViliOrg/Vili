@@ -5,37 +5,27 @@
 #define TAO_PEGTL_INTERNAL_BOL_HPP
 
 #include "../config.hpp"
+#include "../type_list.hpp"
 
-#include "skip_control.hpp"
+#include "enable_control.hpp"
 
-#include "../analysis/generic.hpp"
-
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   struct bol
    {
-      namespace internal
+      using rule_t = bol;
+      using subs_t = empty_list;
+
+      template< typename ParseInput >
+      [[nodiscard]] static bool match( ParseInput& in ) noexcept
       {
-         struct bol
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::opt >;
+         return in.byte_in_line() == 1;
+      }
+   };
 
-            template< typename Input >
-            static bool match( Input& in ) noexcept
-            {
-               return in.byte_in_line() == 0;
-            }
-         };
+   template<>
+   inline constexpr bool enable_control< bol > = false;
 
-         template<>
-         struct skip_control< bol > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

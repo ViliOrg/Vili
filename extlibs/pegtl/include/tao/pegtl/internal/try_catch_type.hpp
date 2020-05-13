@@ -8,69 +8,57 @@
 
 #include "../config.hpp"
 
+#include "enable_control.hpp"
 #include "seq.hpp"
-#include "skip_control.hpp"
-#include "trivial.hpp"
+#include "success.hpp"
 
 #include "../apply_mode.hpp"
 #include "../rewind_mode.hpp"
+#include "../type_list.hpp"
 
-#include "../analysis/generic.hpp"
-
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   template< typename Exception, typename... Rules >
+   struct try_catch_type
+      : try_catch_type< Exception, seq< Rules... > >
+   {};
+
+   template< typename Exception >
+   struct try_catch_type< Exception >
+      : success
+   {};
+
+   template< typename Exception, typename Rule >
+   struct try_catch_type< Exception, Rule >
    {
-      namespace internal
+      using rule_t = try_catch_type;
+      using subs_t = type_list< Rule >;
+
+      template< apply_mode A,
+                rewind_mode M,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class Control,
+                typename ParseInput,
+                typename... States >
+      [[nodiscard]] static bool match( ParseInput& in, States&&... st )
       {
-         template< typename Exception, typename... Rules >
-         struct try_catch_type
-            : try_catch_type< Exception, seq< Rules... > >
-         {
-         };
+         auto m = in.template mark< M >();
+         using m_t = decltype( m );
 
-         template< typename Exception >
-         struct try_catch_type< Exception >
-            : trivial< true >
-         {
-         };
+         try {
+            return m( Control< Rule >::template match< A, m_t::next_rewind_mode, Action, Control >( in, st... ) );
+         }
+         catch( const Exception& ) {
+            return false;
+         }
+      }
+   };
 
-         template< typename Exception, typename Rule >
-         struct try_catch_type< Exception, Rule >
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::seq, Rule >;
+   template< typename Exception, typename... Rules >
+   inline constexpr bool enable_control< try_catch_type< Exception, Rules... > > = false;
 
-            template< apply_mode A,
-                      rewind_mode M,
-                      template< typename... >
-                      class Action,
-                      template< typename... >
-                      class Control,
-                      typename Input,
-                      typename... States >
-            static bool match( Input& in, States&&... st )
-            {
-               auto m = in.template mark< M >();
-               using m_t = decltype( m );
-
-               try {
-                  return m( Control< Rule >::template match< A, m_t::next_rewind_mode, Action, Control >( in, st... ) );
-               }
-               catch( const Exception& ) {
-                  return false;
-               }
-            }
-         };
-
-         template< typename Exception, typename... Rules >
-         struct skip_control< try_catch_type< Exception, Rules... > > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

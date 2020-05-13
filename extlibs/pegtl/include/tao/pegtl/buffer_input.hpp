@@ -24,199 +24,189 @@
 #include "internal/iterator.hpp"
 #include "internal/marker.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE
 {
-   namespace TAO_PEGTL_NAMESPACE
+   template< typename Reader, typename Eol = eol::lf_crlf, typename Source = std::string, std::size_t Chunk = 64 >
+   class buffer_input
    {
-      template< typename Reader, typename Eol = eol::lf_crlf, typename Source = std::string, std::size_t Chunk = 64 >
-      class buffer_input
+   public:
+      using reader_t = Reader;
+
+      using eol_t = Eol;
+      using source_t = Source;
+
+      using iterator_t = internal::iterator;
+
+      using action_t = internal::action_input< buffer_input >;
+
+      static constexpr std::size_t chunk_size = Chunk;
+      static constexpr tracking_mode tracking_mode_v = tracking_mode::eager;
+
+      template< typename T, typename... As >
+      buffer_input( T&& in_source, const std::size_t maximum, As&&... as )
+         : m_reader( std::forward< As >( as )... ),
+           m_maximum( maximum + Chunk ),
+           m_buffer( new char[ maximum + Chunk ] ),
+           m_current( m_buffer.get() ),
+           m_end( m_buffer.get() ),
+           m_source( std::forward< T >( in_source ) )
       {
-      public:
-         using reader_t = Reader;
+         static_assert( Chunk, "zero chunk size not implemented" );
+         assert( m_maximum > maximum );  // Catches overflow; change to >= when zero chunk size is implemented.
+      }
 
-         using eol_t = Eol;
-         using source_t = Source;
+      buffer_input( const buffer_input& ) = delete;
+      buffer_input( buffer_input&& ) = delete;
 
-         using iterator_t = internal::iterator;
+      ~buffer_input() = default;
 
-         using action_t = internal::action_input< buffer_input >;
+      void operator=( const buffer_input& ) = delete;
+      void operator=( buffer_input&& ) = delete;
 
-         static constexpr std::size_t chunk_size = Chunk;
-         static constexpr tracking_mode tracking_mode_v = tracking_mode::eager;
+      [[nodiscard]] bool empty()
+      {
+         require( 1 );
+         return m_current.data == m_end;
+      }
 
-         template< typename T, typename... As >
-         buffer_input( T&& in_source, const std::size_t maximum, As&&... as )
-            : m_reader( std::forward< As >( as )... ),
-              m_maximum( maximum + Chunk ),
-              m_buffer( new char[ maximum + Chunk ] ),
-              m_current( m_buffer.get() ),
-              m_end( m_buffer.get() ),
-              m_source( std::forward< T >( in_source ) )
-         {
-            static_assert( Chunk != 0, "zero chunk size not implemented" );
-            assert( m_maximum > maximum );  // Catches overflow; change to >= when zero chunk size is implemented.
+      [[nodiscard]] std::size_t size( const std::size_t amount )
+      {
+         require( amount );
+         return buffer_occupied();
+      }
+
+      [[nodiscard]] const char* current() const noexcept
+      {
+         return m_current.data;
+      }
+
+      [[nodiscard]] const char* end( const std::size_t amount )
+      {
+         require( amount );
+         return m_end;
+      }
+
+      [[nodiscard]] std::size_t byte() const noexcept
+      {
+         return m_current.byte;
+      }
+
+      [[nodiscard]] std::size_t line() const noexcept
+      {
+         return m_current.line;
+      }
+
+      [[nodiscard]] std::size_t byte_in_line() const noexcept
+      {
+         return m_current.byte_in_line;
+      }
+
+      [[nodiscard]] const Source& source() const noexcept
+      {
+         return m_source;
+      }
+
+      [[nodiscard]] char peek_char( const std::size_t offset = 0 ) const noexcept
+      {
+         return m_current.data[ offset ];
+      }
+
+      [[nodiscard]] std::uint8_t peek_uint8( const std::size_t offset = 0 ) const noexcept
+      {
+         return static_cast< std::uint8_t >( peek_char( offset ) );
+      }
+
+      void bump( const std::size_t in_count = 1 ) noexcept
+      {
+         internal::bump( m_current, in_count, Eol::ch );
+      }
+
+      void bump_in_this_line( const std::size_t in_count = 1 ) noexcept
+      {
+         internal::bump_in_this_line( m_current, in_count );
+      }
+
+      void bump_to_next_line( const std::size_t in_count = 1 ) noexcept
+      {
+         internal::bump_to_next_line( m_current, in_count );
+      }
+
+      void discard() noexcept
+      {
+         if( m_current.data > m_buffer.get() + Chunk ) {
+            const auto s = m_end - m_current.data;
+            std::memmove( m_buffer.get(), m_current.data, s );
+            m_current.data = m_buffer.get();
+            m_end = m_buffer.get() + s;
          }
+      }
 
-         buffer_input( const buffer_input& ) = delete;
-         buffer_input( buffer_input&& ) = delete;
-
-         ~buffer_input() = default;
-
-         void operator=( const buffer_input& ) = delete;
-         void operator=( buffer_input&& ) = delete;
-
-         bool empty()
-         {
-            require( 1 );
-            return m_current.data == m_end;
+      void require( const std::size_t amount )
+      {
+         if( m_current.data + amount <= m_end ) {
+            return;
          }
-
-         std::size_t size( const std::size_t amount )
-         {
-            require( amount );
-            return buffer_occupied();
+         if( m_current.data + amount > m_buffer.get() + m_maximum ) {
+            throw std::overflow_error( "require beyond end of buffer" );
          }
-
-         const char* current() const noexcept
-         {
-            return m_current.data;
+         if( const auto r = m_reader( m_end, ( std::min )( buffer_free_after_end(), ( std::max )( amount - buffer_occupied(), Chunk ) ) ) ) {
+            m_end += r;
          }
+      }
 
-         const char* end( const std::size_t amount )
-         {
-            require( amount );
-            return m_end;
-         }
+      template< rewind_mode M >
+      [[nodiscard]] internal::marker< iterator_t, M > mark() noexcept
+      {
+         return internal::marker< iterator_t, M >( m_current );
+      }
 
-         std::size_t byte() const noexcept
-         {
-            return m_current.byte;
-         }
+      [[nodiscard]] TAO_PEGTL_NAMESPACE::position position( const iterator_t& it ) const
+      {
+         return TAO_PEGTL_NAMESPACE::position( it, m_source );
+      }
 
-         std::size_t line() const noexcept
-         {
-            return m_current.line;
-         }
+      [[nodiscard]] TAO_PEGTL_NAMESPACE::position position() const
+      {
+         return position( m_current );
+      }
 
-         std::size_t byte_in_line() const noexcept
-         {
-            return m_current.byte_in_line;
-         }
+      [[nodiscard]] const iterator_t& iterator() const noexcept
+      {
+         return m_current;
+      }
 
-         const Source& source() const noexcept
-         {
-            return m_source;
-         }
+      [[nodiscard]] std::size_t buffer_capacity() const noexcept
+      {
+         return m_maximum;
+      }
 
-         char peek_char( const std::size_t offset = 0 ) const noexcept
-         {
-            return m_current.data[ offset ];
-         }
+      [[nodiscard]] std::size_t buffer_occupied() const noexcept
+      {
+         assert( m_end >= m_current.data );
+         return std::size_t( m_end - m_current.data );
+      }
 
-         std::uint8_t peek_uint8( const std::size_t offset = 0 ) const noexcept
-         {
-            return static_cast< std::uint8_t >( peek_char( offset ) );
-         }
+      [[nodiscard]] std::size_t buffer_free_before_current() const noexcept
+      {
+         assert( m_current.data >= m_buffer.get() );
+         return std::size_t( m_current.data - m_buffer.get() );
+      }
 
-         // Compatibility, remove with 3.0.0
-         std::uint8_t peek_byte( const std::size_t offset = 0 ) const noexcept
-         {
-            return static_cast< std::uint8_t >( peek_char( offset ) );
-         }
+      [[nodiscard]] std::size_t buffer_free_after_end() const noexcept
+      {
+         assert( m_buffer.get() + m_maximum >= m_end );
+         return std::size_t( m_buffer.get() + m_maximum - m_end );
+      }
 
-         void bump( const std::size_t in_count = 1 ) noexcept
-         {
-            internal::bump( m_current, in_count, Eol::ch );
-         }
+   private:
+      Reader m_reader;
+      std::size_t m_maximum;
+      std::unique_ptr< char[] > m_buffer;
+      iterator_t m_current;
+      char* m_end;
+      const Source m_source;
+   };
 
-         void bump_in_this_line( const std::size_t in_count = 1 ) noexcept
-         {
-            internal::bump_in_this_line( m_current, in_count );
-         }
-
-         void bump_to_next_line( const std::size_t in_count = 1 ) noexcept
-         {
-            internal::bump_to_next_line( m_current, in_count );
-         }
-
-         void discard() noexcept
-         {
-            if( m_current.data > m_buffer.get() + Chunk ) {
-               const auto s = m_end - m_current.data;
-               std::memmove( m_buffer.get(), m_current.data, s );
-               m_current.data = m_buffer.get();
-               m_end = m_buffer.get() + s;
-            }
-         }
-
-         void require( const std::size_t amount )
-         {
-            if( m_current.data + amount <= m_end ) {
-               return;
-            }
-            if( m_current.data + amount > m_buffer.get() + m_maximum ) {
-               throw std::overflow_error( "require beyond end of buffer" );
-            }
-            if( const auto r = m_reader( m_end, ( std::min )( buffer_free_after_end(), ( std::max )( amount - buffer_occupied(), Chunk ) ) ) ) {
-               m_end += r;
-            }
-         }
-
-         template< rewind_mode M >
-         internal::marker< iterator_t, M > mark() noexcept
-         {
-            return internal::marker< iterator_t, M >( m_current );
-         }
-
-         TAO_PEGTL_NAMESPACE::position position( const iterator_t& it ) const
-         {
-            return TAO_PEGTL_NAMESPACE::position( it, m_source );
-         }
-
-         TAO_PEGTL_NAMESPACE::position position() const
-         {
-            return position( m_current );
-         }
-
-         const iterator_t& iterator() const noexcept
-         {
-            return m_current;
-         }
-
-         std::size_t buffer_capacity() const noexcept
-         {
-            return m_maximum;
-         }
-
-         std::size_t buffer_occupied() const noexcept
-         {
-            assert( m_end >= m_current.data );
-            return std::size_t( m_end - m_current.data );
-         }
-
-         std::size_t buffer_free_before_current() const noexcept
-         {
-            assert( m_current.data >= m_buffer.get() );
-            return std::size_t( m_current.data - m_buffer.get() );
-         }
-
-         std::size_t buffer_free_after_end() const noexcept
-         {
-            assert( m_buffer.get() + m_maximum >= m_end );
-            return std::size_t( m_buffer.get() + m_maximum - m_end );
-         }
-
-      private:
-         Reader m_reader;
-         std::size_t m_maximum;
-         std::unique_ptr< char[] > m_buffer;  // NOLINT
-         iterator_t m_current;
-         char* m_end;
-         const Source m_source;
-      };
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE
 
 #endif

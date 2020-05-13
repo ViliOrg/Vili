@@ -6,81 +6,67 @@
 
 #include "../config.hpp"
 
-#include "skip_control.hpp"
+#include "enable_control.hpp"
 
 #include "../apply_mode.hpp"
 #include "../memory_input.hpp"
 #include "../rewind_mode.hpp"
+#include "../type_list.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   template< typename Head, typename... Rules >
+   struct rematch;
+
+   template< typename Head >
+   struct rematch< Head >
    {
-      namespace internal
+      using rule_t = rematch;
+      using subs_t = type_list< Head >;
+
+      template< apply_mode A,
+                rewind_mode M,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class Control,
+                typename ParseInput,
+                typename... States >
+      [[nodiscard]] static bool match( ParseInput& in, States&&... st )
       {
-         template< typename Head, typename... Rules >
-         struct rematch;
+         return Control< Head >::template match< A, M, Action, Control >( in, st... );
+      }
+   };
 
-         template< typename Head >
-         struct rematch< Head >
-         {
-            using analyze_t = typename Head::analyze_t;
+   template< typename Head, typename Rule, typename... Rules >
+   struct rematch< Head, Rule, Rules... >
+   {
+      using rule_t = rematch;
+      using subs_t = type_list< Head, Rule, Rules... >;
 
-            template< apply_mode A,
-                      rewind_mode M,
-                      template< typename... >
-                      class Action,
-                      template< typename... >
-                      class Control,
-                      typename Input,
-                      typename... States >
-            static bool match( Input& in, States&&... st )
-            {
-               return Control< Head >::template match< A, M, Action, Control >( in, st... );
-            }
-         };
+      template< apply_mode A,
+                rewind_mode,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class Control,
+                typename ParseInput,
+                typename... States >
+      [[nodiscard]] static bool match( ParseInput& in, States&&... st )
+      {
+         auto m = in.template mark< rewind_mode::required >();
 
-         template< typename Head, typename Rule, typename... Rules >
-         struct rematch< Head, Rule, Rules... >
-         {
-            using analyze_t = typename Head::analyze_t;  // NOTE: Rule and Rules are ignored for analyze().
+         if( Control< Head >::template match< A, rewind_mode::active, Action, Control >( in, st... ) ) {
+            memory_input< ParseInput::tracking_mode_v, typename ParseInput::eol_t, typename ParseInput::source_t > i2( m.iterator(), in.current(), in.source() );
+            return m( ( Control< Rule >::template match< A, rewind_mode::active, Action, Control >( i2, st... ) && ... && ( i2.restart( m ), Control< Rules >::template match< A, rewind_mode::active, Action, Control >( i2, st... ) ) ) );
+         }
+         return false;
+      }
+   };
 
-            template< apply_mode A,
-                      rewind_mode,
-                      template< typename... >
-                      class Action,
-                      template< typename... >
-                      class Control,
-                      typename Input,
-                      typename... States >
-            static bool match( Input& in, States&&... st )
-            {
-               auto m = in.template mark< rewind_mode::required >();
+   template< typename Head, typename... Rules >
+   inline constexpr bool enable_control< rematch< Head, Rules... > > = false;
 
-               if( Control< Head >::template match< A, rewind_mode::active, Action, Control >( in, st... ) ) {
-                  memory_input< Input::tracking_mode_v, typename Input::eol_t, typename Input::source_t > i2( m.iterator(), in.current(), in.source() );
-#ifdef __cpp_fold_expressions
-                  return m( ( Control< Rule >::template match< A, rewind_mode::active, Action, Control >( i2, st... ) && ... && ( i2.restart( m ), Control< Rules >::template match< A, rewind_mode::active, Action, Control >( i2, st... ) ) ) );
-#else
-                  bool result = Control< Rule >::template match< A, rewind_mode::active, Action, Control >( i2, st... );
-                  using swallow = bool[];
-                  (void)swallow{ result = result && ( i2.restart( m ), Control< Rules >::template match< A, rewind_mode::active, Action, Control >( i2, st... ) )..., true };
-                  return m( result );
-#endif
-               }
-               return false;
-            }
-         };
-
-         template< typename Head, typename... Rules >
-         struct skip_control< rematch< Head, Rules... > > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

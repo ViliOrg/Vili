@@ -7,70 +7,60 @@
 #include <unicode/uchar.h>
 
 #include "../../config.hpp"
+#include "../../type_list.hpp"
 
-#include "../../analysis/generic.hpp"
-#include "../../internal/skip_control.hpp"
+#include "../../internal/enable_control.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   namespace icu
    {
-      namespace internal
+      template< typename Peek, UProperty P, bool V = true >
+      struct binary_property
       {
-         namespace icu
-         {
-            template< typename Peek, UProperty P, bool V = true >
-            struct binary_property
-            {
-               using analyze_t = analysis::generic< analysis::rule_type::any >;
+         using rule_t = binary_property;
+         using subs_t = empty_list;
 
-               template< typename Input >
-               static bool match( Input& in ) noexcept( noexcept( Peek::peek( in ) ) )
-               {
-                  if( const auto r = Peek::peek( in ) ) {
-                     if( u_hasBinaryProperty( r.data, P ) == V ) {
-                        in.bump( r.size );
-                        return true;
-                     }
-                  }
-                  return false;
+         template< typename ParseInput >
+         [[nodiscard]] static bool match( ParseInput& in ) noexcept( noexcept( Peek::peek( in ) ) )
+         {
+            if( const auto r = Peek::peek( in ) ) {
+               if( u_hasBinaryProperty( r.data, P ) == V ) {
+                  in.bump( r.size );
+                  return true;
                }
-            };
+            }
+            return false;
+         }
+      };
 
-            template< typename Peek, UProperty P, int V >
-            struct property_value
-            {
-               using analyze_t = analysis::generic< analysis::rule_type::any >;
+      template< typename Peek, UProperty P, int V >
+      struct property_value
+      {
+         using rule_t = property_value;
+         using subs_t = empty_list;
 
-               template< typename Input >
-               static bool match( Input& in ) noexcept( noexcept( Peek::peek( in ) ) )
-               {
-                  if( const auto r = Peek::peek( in ) ) {
-                     if( u_getIntPropertyValue( r.data, P ) == V ) {
-                        in.bump( r.size );
-                        return true;
-                     }
-                  }
-                  return false;
+         template< typename ParseInput >
+         [[nodiscard]] static bool match( ParseInput& in ) noexcept( noexcept( Peek::peek( in ) ) )
+         {
+            if( const auto r = Peek::peek( in ) ) {
+               if( u_getIntPropertyValue( r.data, P ) == V ) {
+                  in.bump( r.size );
+                  return true;
                }
-            };
+            }
+            return false;
+         }
+      };
 
-         }  // namespace icu
+   }  // namespace icu
 
-         template< typename Peek, UProperty P, bool V >
-         struct skip_control< icu::binary_property< Peek, P, V > > : std::true_type
-         {
-         };
+   template< typename Peek, UProperty P, bool V >
+   inline constexpr bool enable_control< icu::binary_property< Peek, P, V > > = false;
 
-         template< typename Peek, UProperty P, int V >
-         struct skip_control< icu::property_value< Peek, P, V > > : std::true_type
-         {
-         };
+   template< typename Peek, UProperty P, int V >
+   inline constexpr bool enable_control< icu::property_value< Peek, P, V > > = false;
 
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

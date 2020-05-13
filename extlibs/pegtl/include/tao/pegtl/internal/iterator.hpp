@@ -4,57 +4,51 @@
 #ifndef TAO_PEGTL_INTERNAL_ITERATOR_HPP
 #define TAO_PEGTL_INTERNAL_ITERATOR_HPP
 
+#include <cassert>
 #include <cstdlib>
 
 #include "../config.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   struct iterator
    {
-      namespace internal
+      iterator() = default;
+
+      explicit iterator( const char* in_data ) noexcept
+         : data( in_data )
+      {}
+
+      iterator( const char* in_data, const std::size_t in_byte, const std::size_t in_line, const std::size_t in_byte_in_line ) noexcept
+         : data( in_data ),
+           byte( in_byte ),
+           line( in_line ),
+           byte_in_line( in_byte_in_line )
       {
-         struct iterator
-         {
-            iterator() noexcept = default;
+         assert( in_line != 0 );
+         assert( in_byte_in_line != 0 );
+      }
 
-            explicit iterator( const char* in_data ) noexcept
-               : data( in_data )
-            {
-            }
+      iterator( const iterator& ) = default;
+      iterator( iterator&& ) = default;
 
-            iterator( const char* in_data, const std::size_t in_byte, const std::size_t in_line, const std::size_t in_byte_in_line ) noexcept
-               : data( in_data ),
-                 byte( in_byte ),
-                 line( in_line ),
-                 byte_in_line( in_byte_in_line )
-            {
-            }
+      ~iterator() = default;
 
-            iterator( const iterator& ) = default;
-            iterator( iterator&& ) = default;
+      iterator& operator=( const iterator& ) = default;
+      iterator& operator=( iterator&& ) = default;
 
-            ~iterator() = default;
+      void reset() noexcept
+      {
+         *this = iterator();
+      }
 
-            iterator& operator=( const iterator& ) = default;
-            iterator& operator=( iterator&& ) = default;
+      const char* data = nullptr;
 
-            void reset() noexcept
-            {
-               *this = iterator();
-            }
+      std::size_t byte = 0;
+      std::size_t line = 1;
+      std::size_t byte_in_line = 1;
+   };
 
-            const char* data = nullptr;
-
-            std::size_t byte = 0;
-            std::size_t line = 1;
-            std::size_t byte_in_line = 0;
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

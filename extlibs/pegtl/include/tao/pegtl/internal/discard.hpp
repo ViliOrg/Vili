@@ -6,38 +6,29 @@
 
 #include "../config.hpp"
 
-#include "skip_control.hpp"
+#include "enable_control.hpp"
 
-#include "../analysis/generic.hpp"
+#include "../type_list.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   struct discard
    {
-      namespace internal
+      using rule_t = discard;
+      using subs_t = empty_list;
+
+      template< typename ParseInput >
+      [[nodiscard]] static bool match( ParseInput& in ) noexcept
       {
-         struct discard
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::opt >;
+         static_assert( noexcept( in.discard() ) );
+         in.discard();
+         return true;
+      }
+   };
 
-            template< typename Input >
-            static bool match( Input& in ) noexcept
-            {
-               static_assert( noexcept( in.discard() ), "an input's discard()-method must be noexcept" );
-               in.discard();
-               return true;
-            }
-         };
+   template<>
+   inline constexpr bool enable_control< discard > = false;
 
-         template<>
-         struct skip_control< discard > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

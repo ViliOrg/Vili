@@ -6,54 +6,49 @@
 
 #include "../config.hpp"
 
+#include "enable_control.hpp"
 #include "seq.hpp"
-#include "skip_control.hpp"
+#include "success.hpp"
 
 #include "../apply_mode.hpp"
 #include "../rewind_mode.hpp"
+#include "../type_list.hpp"
 
-#include "../analysis/generic.hpp"
-
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   template< template< typename... > class Control, typename... Rules >
+   struct control
+      : control< Control, seq< Rules... > >
+   {};
+
+   template< template< typename... > class Control >
+   struct control< Control >
+      : success
+   {};
+
+   template< template< typename... > class Control, typename Rule >
+   struct control< Control, Rule >
    {
-      namespace internal
+      using rule_t = control;
+      using subs_t = type_list< Rule >;
+
+      template< apply_mode A,
+                rewind_mode M,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class,
+                typename ParseInput,
+                typename... States >
+      [[nodiscard]] static bool match( ParseInput& in, States&&... st )
       {
-         template< template< typename... > class Control, typename... Rules >
-         struct control
-            : control< Control, seq< Rules... > >
-         {
-         };
+         return Control< Rule >::template match< A, M, Action, Control >( in, st... );
+      }
+   };
 
-         template< template< typename... > class Control, typename Rule >
-         struct control< Control, Rule >
-         {
-            using analyze_t = analysis::generic< analysis::rule_type::seq, Rule >;
+   template< template< typename... > class Control, typename... Rules >
+   inline constexpr bool enable_control< control< Control, Rules... > > = false;
 
-            template< apply_mode A,
-                      rewind_mode M,
-                      template< typename... >
-                      class Action,
-                      template< typename... >
-                      class,
-                      typename Input,
-                      typename... States >
-            static bool match( Input& in, States&&... st )
-            {
-               return Control< Rule >::template match< A, M, Action, Control >( in, st... );
-            }
-         };
-
-         template< template< typename... > class Control, typename... Rules >
-         struct skip_control< control< Control, Rules... > > : std::true_type
-         {
-         };
-
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

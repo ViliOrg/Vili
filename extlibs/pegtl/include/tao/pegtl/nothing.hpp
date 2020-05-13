@@ -6,19 +6,14 @@
 
 #include "config.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE
 {
-   namespace TAO_PEGTL_NAMESPACE
-   {
-      template< typename Rule >
-      struct nothing
-      {
-      };
+   template< typename Rule >
+   struct nothing
+   {};
 
-      using maybe_nothing = nothing< void >;
+   using maybe_nothing = nothing< void >;
 
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE
 
 #endif

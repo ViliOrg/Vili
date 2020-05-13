@@ -35,6 +35,7 @@ namespace vili
         template <node_type type> bool is();
         template <class T>[[nodiscard]] bool is() const;
         [[nodiscard]] bool is_primitive() const;
+        [[nodiscard]] bool is_container() const;
         [[nodiscard]] bool is_null() const;
         template <class T> T& as();
         template <class T> const T& as() const;
@@ -44,6 +45,7 @@ namespace vili
         void push(const node& value);
         void insert(size_t index, const node& value);
         void insert(const std::string& key, node value);
+        node& back();
     };
 
     template <node_type type> bool node::is()

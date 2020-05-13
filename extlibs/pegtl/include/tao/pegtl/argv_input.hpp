@@ -14,44 +14,36 @@
 #include "memory_input.hpp"
 #include "tracking_mode.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE
 {
-   namespace TAO_PEGTL_NAMESPACE
+   namespace internal
    {
-      namespace internal
+      [[nodiscard]] inline std::string make_argv_source( const std::size_t argn )
       {
-         inline std::string make_argv_source( const std::size_t argn )
-         {
-            std::ostringstream os;
-            os << "argv[" << argn << ']';
-            return os.str();
-         }
+         std::ostringstream os;
+         os << "argv[" << argn << ']';
+         return os.str();
+      }
 
-      }  // namespace internal
+   }  // namespace internal
 
-      template< tracking_mode P = tracking_mode::eager, typename Eol = eol::lf_crlf >
-      struct argv_input
-         : public memory_input< P, Eol >
-      {
-         template< typename T >
-         argv_input( char** argv, const std::size_t argn, T&& in_source )
-            : memory_input< P, Eol >( static_cast< const char* >( argv[ argn ] ), std::forward< T >( in_source ) )
-         {
-         }
+   template< tracking_mode P = tracking_mode::eager, typename Eol = eol::lf_crlf >
+   struct argv_input
+      : memory_input< P, Eol >
+   {
+      template< typename T >
+      argv_input( char** argv, const std::size_t argn, T&& in_source )
+         : memory_input< P, Eol >( static_cast< const char* >( argv[ argn ] ), std::forward< T >( in_source ) )
+      {}
 
-         argv_input( char** argv, const std::size_t argn )
-            : argv_input( argv, argn, internal::make_argv_source( argn ) )
-         {
-         }
-      };
+      argv_input( char** argv, const std::size_t argn )
+         : argv_input( argv, argn, internal::make_argv_source( argn ) )
+      {}
+   };
 
-#ifdef __cpp_deduction_guides
-      template< typename... Ts >
-      argv_input( Ts&&... )->argv_input<>;
-#endif
+   template< typename... Ts >
+   argv_input( Ts&&... ) -> argv_input<>;
 
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE
 
 #endif

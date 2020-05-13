@@ -9,70 +9,63 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <system_error>
 #include <utility>
 
 #include "../config.hpp"
-#include "../input_error.hpp"
 
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   struct file_opener
    {
-      namespace internal
+      explicit file_opener( const char* filename )
+         : m_source( filename ),
+           m_fd( open() )
+      {}
+
+      file_opener( const file_opener& ) = delete;
+      file_opener( file_opener&& ) = delete;
+
+      ~file_opener() noexcept
       {
-         struct file_opener
-         {
-            explicit file_opener( const char* filename )
-               : m_source( filename ),
-                 m_fd( open() )
-            {
-            }
+         ::close( m_fd );
+      }
 
-            file_opener( const file_opener& ) = delete;
-            file_opener( file_opener&& ) = delete;
+      void operator=( const file_opener& ) = delete;
+      void operator=( file_opener&& ) = delete;
 
-            ~file_opener() noexcept
-            {
-               ::close( m_fd );
-            }
+      [[nodiscard]] std::size_t size() const
+      {
+         struct stat st;
+         errno = 0;
+         if( ::fstat( m_fd, &st ) < 0 ) {
+            const auto ec = errno;
+            throw std::system_error( ec, std::system_category(), m_source );
+         }
+         return std::size_t( st.st_size );
+      }
 
-            void operator=( const file_opener& ) = delete;
-            void operator=( file_opener&& ) = delete;
+      const char* const m_source;
+      const int m_fd;
 
-            std::size_t size() const
-            {
-               struct stat st;  // NOLINT
-               errno = 0;
-               if( ::fstat( m_fd, &st ) < 0 ) {
-                  TAO_PEGTL_THROW_INPUT_ERROR( "unable to fstat() file " << m_source << " descriptor " << m_fd );
-               }
-               return std::size_t( st.st_size );
-            }
-
-            const char* const m_source;
-            const int m_fd;
-
-         private:
-            int open() const
-            {
-               errno = 0;
-               const int fd = ::open( m_source,  // NOLINT
-                                      O_RDONLY
-#ifdef O_CLOEXEC
-                                         | O_CLOEXEC
+   private:
+      [[nodiscard]] int open() const
+      {
+         errno = 0;
+         const int fd = ::open( m_source,
+                                O_RDONLY
+#if defined( O_CLOEXEC )
+                                   | O_CLOEXEC
 #endif
-               );
-               if( fd >= 0 ) {
-                  return fd;
-               }
-               TAO_PEGTL_THROW_INPUT_ERROR( "unable to open() file " << m_source << " for reading" );
-            }
-         };
+         );
+         if( fd >= 0 ) {
+            return fd;
+         }
+         const auto ec = errno;
+         throw std::system_error( ec, std::system_category(), m_source );
+      }
+   };
 
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif

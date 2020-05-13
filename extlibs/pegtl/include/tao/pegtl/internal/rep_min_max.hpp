@@ -8,84 +8,74 @@
 
 #include "../config.hpp"
 
+#include "enable_control.hpp"
+#include "failure.hpp"
 #include "not_at.hpp"
 #include "seq.hpp"
-#include "skip_control.hpp"
-#include "trivial.hpp"
 
 #include "../apply_mode.hpp"
 #include "../rewind_mode.hpp"
+#include "../type_list.hpp"
 
-#include "../analysis/counted.hpp"
-
-namespace tao
+namespace TAO_PEGTL_NAMESPACE::internal
 {
-   namespace TAO_PEGTL_NAMESPACE
+   template< unsigned Min, unsigned Max, typename... Rules >
+   struct rep_min_max
+      : rep_min_max< Min, Max, seq< Rules... > >
    {
-      namespace internal
+      static_assert( Min <= Max );
+   };
+
+   template< unsigned Min, unsigned Max >
+   struct rep_min_max< Min, Max >
+      : failure
+   {
+      static_assert( Min <= Max );
+   };
+
+   template< typename Rule >
+   struct rep_min_max< 0, 0, Rule >
+      : not_at< Rule >
+   {};
+
+   template< unsigned Min, unsigned Max, typename Rule >
+   struct rep_min_max< Min, Max, Rule >
+   {
+      using rule_t = rep_min_max;
+      using subs_t = type_list< Rule >;
+
+      static_assert( Min <= Max );
+
+      template< apply_mode A,
+                rewind_mode M,
+                template< typename... >
+                class Action,
+                template< typename... >
+                class Control,
+                typename ParseInput,
+                typename... States >
+      [[nodiscard]] static bool match( ParseInput& in, States&&... st )
       {
-         template< unsigned Min, unsigned Max, typename... Rules >
-         struct rep_min_max
-            : rep_min_max< Min, Max, seq< Rules... > >
-         {
-         };
+         auto m = in.template mark< M >();
+         using m_t = decltype( m );
 
-         template< unsigned Min, unsigned Max >
-         struct rep_min_max< Min, Max >
-            : trivial< false >
-         {
-            static_assert( Min <= Max, "invalid rep_min_max rule (maximum number of repetitions smaller than minimum)" );
-         };
-
-         template< typename Rule >
-         struct rep_min_max< 0, 0, Rule >
-            : not_at< Rule >
-         {
-         };
-
-         template< unsigned Min, unsigned Max, typename Rule >
-         struct rep_min_max< Min, Max, Rule >
-         {
-            using analyze_t = analysis::counted< analysis::rule_type::seq, Min, Rule >;
-
-            static_assert( Min <= Max, "invalid rep_min_max rule (maximum number of repetitions smaller than minimum)" );
-
-            template< apply_mode A,
-                      rewind_mode M,
-                      template< typename... >
-                      class Action,
-                      template< typename... >
-                      class Control,
-                      typename Input,
-                      typename... States >
-            static bool match( Input& in, States&&... st )
-            {
-               auto m = in.template mark< M >();
-               using m_t = decltype( m );
-
-               for( unsigned i = 0; i != Min; ++i ) {
-                  if( !Control< Rule >::template match< A, m_t::next_rewind_mode, Action, Control >( in, st... ) ) {
-                     return false;
-                  }
-               }
-               for( unsigned i = Min; i != Max; ++i ) {
-                  if( !Control< Rule >::template match< A, rewind_mode::required, Action, Control >( in, st... ) ) {
-                     return m( true );
-                  }
-               }
-               return m( Control< not_at< Rule > >::template match< A, m_t::next_rewind_mode, Action, Control >( in, st... ) );  // NOTE that not_at<> will always rewind.
+         for( unsigned i = 0; i != Min; ++i ) {
+            if( !Control< Rule >::template match< A, m_t::next_rewind_mode, Action, Control >( in, st... ) ) {
+               return false;
             }
-         };
+         }
+         for( unsigned i = Min; i != Max; ++i ) {
+            if( !Control< Rule >::template match< A, rewind_mode::required, Action, Control >( in, st... ) ) {
+               return m( true );
+            }
+         }
+         return m( Control< not_at< Rule > >::template match< A, m_t::next_rewind_mode, Action, Control >( in, st... ) );  // NOTE that not_at<> will always rewind.
+      }
+   };
 
-         template< unsigned Min, unsigned Max, typename... Rules >
-         struct skip_control< rep_min_max< Min, Max, Rules... > > : std::true_type
-         {
-         };
+   template< unsigned Min, unsigned Max, typename... Rules >
+   inline constexpr bool enable_control< rep_min_max< Min, Max, Rules... > > = false;
 
-      }  // namespace internal
-
-   }  // namespace TAO_PEGTL_NAMESPACE
-
-}  // namespace tao
+}  // namespace TAO_PEGTL_NAMESPACE::internal
 
 #endif
