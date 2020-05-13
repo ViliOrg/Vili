@@ -5,6 +5,7 @@
 
 namespace vili::utils::string
 {
+    constexpr auto is_digit = static_cast<int (*)(int)>(std::isdigit);
     size_t count(const std::string& str, const std::string& occur)
     {
         int occurrences = 0;
@@ -22,8 +23,8 @@ namespace vili::utils::string
         if (!str.empty())
         {
             if (str.substr(0, 1) == "-")
-                return std::all_of(str.begin() + 1, str.end(), std::isdigit);
-            return std::all_of(str.begin(), str.end(), std::isdigit);
+                return std::all_of(str.begin() + 1, str.end(), is_digit);
+            return std::all_of(str.begin(), str.end(), is_digit);
         }
         return false;
     }
@@ -41,8 +42,8 @@ namespace vili::utils::string
                 is_a_float = true;
                 float_str.erase(float_str.find('.'));
             }
-            return (std::all_of(float_str.begin(), float_str.end(), std::isdigit)
-                && is_a_float);
+            return (
+                std::all_of(float_str.begin(), float_str.end(), is_digit) && is_a_float);
         }
         return false;
     }
