@@ -1,10 +1,13 @@
 #pragma once
 
-#include <map>
-#include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
+
+#ifdef VILI_KEEP_ORDER
+#include <tsl/ordered_map.h>
+#else
+#include <unordered_map>
+#endif
 
 namespace vili
 {
@@ -20,8 +23,13 @@ namespace vili
     class node;
 
     using null = void*;
-    using object
-        = std::pair<std::unordered_map<std::string, node>, std::vector<std::string>>;
+#ifdef VILI_KEEP_ORDER
+    using object = tsl::ordered_map<std::string, node, std::hash<std::string>,
+        std::equal_to<std::string>, std::allocator<std::pair<std::string, node>>,
+        std::vector<std::pair<std::string, node>>>;
+#else
+    using object = std::unordered_map<std::string, node>;
+#endif
     using array = std::vector<node>;
     using integer = int64_t;
     using number = double;

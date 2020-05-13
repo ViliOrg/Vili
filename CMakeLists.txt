@@ -13,6 +13,14 @@ add_executable(vili ${VILI_HEADERS} ${VILI_SOURCES})
 target_link_libraries(vili fmt)
 target_link_libraries(vili pegtl)
 
+set(VILI_KEEP_ORDER ON CACHE BOOL "Keep insertion order ?")
+
+if (VILI_KEEP_ORDER)
+    add_subdirectory(extlibs/tsl)
+    target_link_libraries(vili tsl)
+    target_compile_definitions(vili PRIVATE VILI_KEEP_ORDER)
+endif()
+
 target_include_directories(vili
     PUBLIC
         $<INSTALL_INTERFACE:include>

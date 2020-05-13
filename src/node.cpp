@@ -19,25 +19,19 @@ namespace vili
     {
         const auto& map = std::get<object>(m_data);
         std::string dump_value = (root) ? "" : "{";
-        for (auto it = map.second.begin(); it != map.second.end(); ++it)
+        for (const auto& [key, value] : map)
         {
-            dump_value += *it + ": " + map.first.at(*it).dump()
-                + (it != (map.second.end() - 1) ? ", " : "");
+            if (!value.is_null())
+                dump_value += key + ": " + value.dump() + ", ";
         }
         if (!root)
             dump_value += "}";
         return dump_value;
     }
 
-    node::node()
-    {
-        // std::cout << "- Create new null node : " << m_data.index() << std::endl;
-    }
-
     node::node(int value)
     {
         m_data = static_cast<int64_t>(value);
-        // std::cout << "- Create new integer node : " << m_data.index() << std::endl;
     }
 
     node::node(integer value)
@@ -125,8 +119,7 @@ namespace vili
 
     bool node::is_null() const
     {
-        if (is<object>() || is<array>() || is<integer>() || is<string>() || is<number>()
-            || is<boolean>())
+        if (m_data.index())
             return false;
         return true;
     }
@@ -136,11 +129,7 @@ namespace vili
         if (is<object>())
         {
             auto& map = std::get<object>(m_data);
-            if (const auto& item = map.first.find(key); item != map.first.end())
-            {
-                return item->second;
-            }
-            throw exceptions::unknown_child_node(key, EXC_INFO);
+            return map[key];
         }
         throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
     }
@@ -167,7 +156,7 @@ namespace vili
         }
         if (is<object>())
         {
-            return std::get<object>(m_data).first.size();
+            return std::get<object>(m_data).size();
         }
         throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
     }
@@ -202,8 +191,7 @@ namespace vili
         if (is<object>())
         {
             auto& map = std::get<object>(m_data);
-            map.first.emplace(key, std::move(value));
-            map.second.push_back(key);
+            map.emplace(key, std::move(value));
         }
         else
         {

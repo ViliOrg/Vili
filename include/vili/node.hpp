@@ -14,12 +14,13 @@ namespace vili
     class node
     {
     protected:
-        std::variant<object, array, integer, number, boolean, string> m_data;
+        std::variant<std::monostate, object, array, integer, number, boolean, string>
+            m_data;
         [[nodiscard]] std::string dump_array() const;
         [[nodiscard]] std::string dump_object(bool root) const;
 
     public:
-        node();
+        node() = default;
         node(int value);
         node(integer value);
         node(number value);
