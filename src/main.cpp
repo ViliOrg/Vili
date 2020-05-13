@@ -1,5 +1,7 @@
 #include <vili/parser.hpp>
 
+#include <iostream>
+
 int main(int argc, char** argv)
 {
     vili::node root = vili::parser::from_string("a: 9");
