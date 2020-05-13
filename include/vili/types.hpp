@@ -31,7 +31,7 @@ namespace vili
     using object = std::unordered_map<std::string, node>;
 #endif
     using array = std::vector<node>;
-    using integer = int64_t;
+    using integer = long long int;
     using number = double;
     using boolean = bool;
     using string = std::string;

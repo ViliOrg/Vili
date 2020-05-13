@@ -31,7 +31,7 @@ namespace vili
 
     node::node(int value)
     {
-        m_data = static_cast<int64_t>(value);
+        m_data = static_cast<integer>(value);
     }
 
     node::node(integer value)
