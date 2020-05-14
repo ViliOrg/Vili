@@ -209,7 +209,6 @@ namespace vili
 
     node& node::back()
     {
-        std::cout << "Fuck" << std::endl;
         if (is<array>())
         {
             return std::get<array>(m_data).back();
@@ -222,5 +221,22 @@ namespace vili
         }
         throw exceptions::invalid_cast(
             object_type, to_string(type()), EXC_INFO); // TODO: Add array
+    }
+
+    node& node::at(const std::string& key)
+    {
+        if (is<object>())
+        {
+            auto& map = std::get<object>(m_data);
+            if (auto element = map.find(key); element != map.end())
+            {
+                return element.value();
+            }
+            else
+            {
+                throw exceptions::unknown_child_node(key, EXC_INFO);
+            }
+        }
+        throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
     }
 }

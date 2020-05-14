@@ -5,7 +5,6 @@
 #include <iostream>
 #include <stack>
 #include <tao/pegtl.hpp>
-#include <tao/pegtl/contrib/parse_tree.hpp>
 #include <tao/pegtl/contrib/trace.hpp>
 
 namespace peg = tao::pegtl;
@@ -21,7 +20,8 @@ namespace vili::parser
         struct affectation : peg::seq<identifier, peg::pad<peg::one<':'>, peg::blank>> {};
 
         // String
-        struct string : peg::seq<peg::one<'"'>, peg::star<peg::not_one<'"'>>, peg::one<'"'>> {};
+        struct string_content : peg::star<peg::not_one<'"'>> {};
+        struct string : peg::seq<peg::one<'"'>, string_content, peg::one<'"'>> {};
 
         // Booleans
         struct true_ : peg::string<'t', 'r', 'u', 'e'> {};
@@ -35,12 +35,16 @@ namespace vili::parser
 
         // Data
         struct data : peg::sor<boolean, number, integer, string> {};
+        struct brace_based_object;
+        struct array;
+        struct object;
+        struct template_usage;
+        struct inline_element : peg::sor<boolean, number, integer, string, array, brace_based_object, template_usage> {};
+        struct inline_node : peg::seq<affectation, inline_element> {};
+        struct element : peg::sor<data, array, object, template_usage> {};
 
         // Arrays
-        struct array;
-        struct brace_based_object;
-        struct array_element : peg::sor<boolean, number, integer, string, array, brace_based_object> {};
-        struct array_elements : peg::list<array_element, peg::one<','>, peg::space> {};
+        struct array_elements : peg::list<inline_element, peg::one<','>, peg::space> {};
         struct open_array : peg::one<'['> {};
         struct close_array : peg::one<']'> {};
         struct array : peg::seq<open_array, peg::pad_opt<array_elements, peg::space>, close_array> {};
@@ -51,29 +55,48 @@ namespace vili::parser
         struct open_object : peg::one<'{'> {};
         struct close_object : peg::one<'}'> {};
         struct comma_or_newline : peg::seq<peg::pad<peg::sor<peg::one<','>, peg::eol>, peg::space>, peg::star<peg::space>> {};
-        struct object_elements : peg::list<node, comma_or_newline> {};
+        struct object_elements : peg::list<inline_node, comma_or_newline> {};
         struct brace_based_object : peg::seq<open_object, peg::pad_opt<object_elements, peg::space>, close_object> {};
         struct object : peg::sor<brace_based_object, indent_based_object> {};
 
         // Comments
         struct inline_comment : peg::seq<peg::one<'#'>, peg::until<peg::eol, peg::any>> {};
 
+        // Templates
+        struct template_keyword : peg::string<'t', 'e', 'm', 'p', 'l', 'a', 't', 'e'> {};
+        struct template_decl : peg::seq<peg::bol, template_keyword, peg::blank, affectation, data> {}; // TODO: Include complex types
+        struct template_usage : peg::identifier {};
+
         // Nodes
-        struct node : peg::seq<affectation, peg::sor<data, array, object>> {};
+        struct node : peg::seq<affectation, element> {};
         struct full_node : peg::seq<indent, node, peg::opt<peg::eol>> {};
         struct empty_line : peg::seq<peg::star<peg::blank>, peg::eol> {};
-        struct line : peg::sor<empty_line, inline_comment, full_node> {};
+        struct line : peg::sor<empty_line, inline_comment, template_decl, full_node> {};
         struct grammar : peg::until<peg::eof, peg::must<line>> {};
         // clang-format on
     }
+
+    class node_in_stack
+    {
+    public:
+        node* item;
+        int indent;
+
+        node_in_stack(node* node, int indent)
+        {
+            this->item = node;
+            this->indent = indent;
+        }
+    };
 
     class state
     {
     private:
         std::string m_identifier;
-        std::stack<std::pair<node*, int>> m_stack;
+        std::stack<node_in_stack> m_stack;
         int64_t m_indent_base = 4;
         int64_t m_indent_current = -1;
+        std::unordered_map<std::string, node> m_templates;
 
     public:
         node root;
@@ -84,12 +107,14 @@ namespace vili::parser
         void open_block();
         void close_block();
         void push(node data);
+        void push_template();
+        [[nodiscard]] node get_template(const std::string& template_name) const;
     };
 
     state::state()
         : root(object {})
     {
-        m_stack.push(std::make_pair(&root, 0));
+        m_stack.emplace(&root, 0);
     }
 
     void state::set_indent(int64_t indent)
@@ -98,7 +123,7 @@ namespace vili::parser
         {
             m_indent_base = indent;
         }
-        if (indent % m_indent_base && m_stack.top().second)
+        if (indent % m_indent_base && m_stack.top().indent)
         {
             throw exceptions::inconsistent_indentation(indent, m_indent_base, EXC_INFO);
         }
@@ -111,7 +136,7 @@ namespace vili::parser
                 this->close_block();
             }
         }
-        else if (m_indent_current == indent && indent < m_stack.top().second)
+        else if (m_indent_current == indent && indent < m_stack.top().indent)
         {
             this->close_block();
         }
@@ -122,13 +147,12 @@ namespace vili::parser
                 throw exceptions::too_much_indentation(indent, EXC_INFO);
             }
         }
-        // std::cout << "================ INDENT FROM " << m_indent_current << " TO " << indent << " / STACK : " << m_stack.size() << std::endl;
         m_indent_current = indent;
     }
 
     void state::use_indent()
     {
-        m_stack.top().second = (m_indent_current + 1);
+        m_stack.top().indent = m_indent_current + 1;
     }
 
     void state::set_active_identifier(const std::string& identifier)
@@ -138,33 +162,25 @@ namespace vili::parser
 
     void state::open_block()
     {
-        std::cout << "Opening block with identifier " << m_identifier << std::endl;
-        m_stack.top().first->insert(m_identifier, node {});
-        m_stack.push(std::make_pair(&m_stack.top().first->operator[](m_identifier), 0));
-        std::cout << "======================================== STACK OPEN : "
-                  << m_stack.size() << std::endl;
+        m_stack.top().item->insert(m_identifier, node {});
+        m_stack.emplace(&m_stack.top().item->at(m_identifier), 0);
     }
 
     void state::close_block()
     {
         m_stack.pop();
-        std::cout << "======================================== STACK EXIT : "
-                  << m_stack.size() << std::endl;
     }
 
-    void state::push(node data)
+    void state::push(const node data)
     {
-        std::cout << "State::push in " << to_string(m_stack.top().first->type())
-                  << std::endl;
-        if (m_stack.top().first->is<array>())
+        node& top = *m_stack.top().item;
+        if (top.is<array>())
         {
-            std::cout << "Push in array" << std::endl;
-            m_stack.top().first->push(data);
+            top.push(data);
         }
-        else if (m_stack.top().first->is<object>())
+        else if (top.is<object>())
         {
-            std::cout << "Push in object" << std::endl;
-            m_stack.top().first->insert(m_identifier, data);
+            top.insert(m_identifier, data);
         }
         else
         {
@@ -172,25 +188,33 @@ namespace vili::parser
         }
         if (data.is_container())
         {
-            m_stack.push(std::make_pair(&m_stack.top().first->back(), 0));
-            std::cout << "======================================== STACK OPEN : "
-                      << m_stack.size() << std::endl;
-            std::cout << "On top of stack is : " << m_stack.top().first->dump()
-                      << std::endl;
+            m_stack.emplace(&top.back(), 0);
         }
+    }
+
+    void state::push_template()
+    {
+        node& top = *m_stack.top().item;
+        if (top.size() == 0)
+            m_templates[m_identifier] = top;
+        else
+            m_templates[m_identifier] = top.back();
+    }
+
+    node state::get_template(const std::string& template_name) const
+    {
+        return m_templates.at(template_name);
     }
 
     template <typename Rule> struct action
     {
     };
 
-    template <> struct action<rules::string>
+    template <> struct action<rules::string_content>
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            std::cout << "Found quote : " << in.string() << std::endl;
-            auto content = in.string();
-            state.push(content.substr(1, content.size() - 2));
+            state.push(in.string());
         }
     };
 
@@ -198,7 +222,6 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            std::cout << "Found float : " << in.string() << std::endl;
             state.push(std::stod(in.string()));
         }
     };
@@ -207,7 +230,6 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            std::cout << "Found integer : " << in.string() << std::endl;
             state.push(std::stoll(in.string()));
         }
     };
@@ -216,25 +238,22 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            std::cout << "Found boolean : " << in.string() << std::endl;
             state.push((in.string() == "true" ? true : false));
         }
     };
 
-    /*template <> struct action<rules::affectation>
+    template <> struct action<rules::template_usage>
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            std::cout << "Found affectation : " << in.string() << std::endl;
-            state.open_block();
+            state.push(state.get_template(in.string()));
         }
-    };*/
+    };
 
     template <> struct action<rules::identifier>
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            std::cout << "Found identifier : " << in.string() << std::endl;
             state.set_active_identifier(in.string());
         }
     };
@@ -243,7 +262,6 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            std::cout << "Opening array : " << in.string() << std::endl;
             state.push(vili::array {});
         }
     };
@@ -252,7 +270,6 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            std::cout << "Closing array : " << in.string() << std::endl;
             state.close_block();
         }
     };
@@ -261,7 +278,6 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            std::cout << "Opening object : " << in.string() << std::endl;
             state.push(vili::object {});
         }
     };
@@ -270,7 +286,6 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            std::cout << "Closing object : " << in.string() << std::endl;
             state.close_block();
         }
     };
@@ -279,7 +294,6 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            std::cout << "Opening [via indent] object : " << in.string() << std::endl;
             state.push(vili::object {});
             state.use_indent();
         }
@@ -289,8 +303,23 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            std::cout << "Set indent level to " << in.string().size() << std::endl;
             state.set_indent(in.string().size());
+        }
+    };
+
+    template <> struct action<rules::template_keyword>
+    {
+        template <class ParseInput> static void apply(const ParseInput& in, state& state)
+        {
+            state.set_indent(0);
+        }
+    };
+
+    template <> struct action<rules::template_decl>
+    {
+        template <class ParseInput> static void apply(const ParseInput& in, state& state)
+        {
+            state.push_template();
         }
     };
 

@@ -46,6 +46,8 @@ namespace vili
         void insert(size_t index, const node& value);
         void insert(const std::string& key, node value);
         node& back();
+
+        node& at(const std::string& key);
     };
 
     template <node_type type> bool node::is()
