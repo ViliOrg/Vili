@@ -6,6 +6,7 @@
 
 #include <fmt/format.h>
 
+#include <vili/config.hpp>
 #include <vili/utils.hpp>
 
 namespace vili::exceptions
@@ -33,26 +34,52 @@ namespace vili::exceptions
     public:
         base_exception(std::string id, debug_info info)
         {
-            m_message = fmt::format("exception [{}] occured\n", id);
-            m_message += fmt::format("  In file: '{}' (line {})\n", info.file, info.line);
-            m_message += fmt::format("  In function: {}\n", info.function);
+            if (VERBOSE_EXCEPTIONS)
+            {
+                m_message = fmt::format("exception [{}] occured\n", id);
+                m_message
+                    += fmt::format("  In file: '{}' (line {})\n", info.file, info.line);
+                m_message += fmt::format("  In function: {}\n", info.function);
+            }
+            else
+            {
+                m_message = id;
+            }
         }
         template <class... Args> void error(Args&&... args)
         {
             const std::string errorMsg = fmt::format(std::forward<Args>(args)...);
-            m_message += fmt::format("  Error: {}\n", errorMsg);
+            if (VERBOSE_EXCEPTIONS)
+            {
+                m_message += fmt::format("  Error: {}\n", errorMsg);
+            }
+            else
+            {
+                m_message += (": " + errorMsg);
+            }
         }
         template <class... Args> void hint(Args&&... args)
         {
             const std::string hintMsg = fmt::format(std::forward<Args>(args)...);
-            m_message += fmt::format("  Hint: {}\n", hintMsg);
+            if (VERBOSE_EXCEPTIONS)
+            {
+                m_message += fmt::format("  Hint: {}\n", hintMsg);
+            }
         }
         const char* what() const noexcept override;
         base_exception& nest(const base_exception& exception)
         {
-            m_message += "  Cause:\n";
-            m_message
-                += "    " + utils::string::replace(exception.what(), "\n", "\n    ");
+            if (VERBOSE_EXCEPTIONS)
+            {
+                m_message += "  Cause:\n";
+                m_message
+                    += "    " + utils::string::replace(exception.what(), "\n", "\n    ");
+            }
+            else
+            {
+                m_message += "\n    "
+                    + utils::string::replace(exception.what(), "\n", "\n    ");
+            }
             return *this;
         }
     };
@@ -93,7 +120,7 @@ namespace vili::exceptions
         }
     };
 
-    class invalid_data_type : base_exception
+    class invalid_data_type : public base_exception
     {
     public:
         invalid_data_type(debug_info info)
@@ -103,7 +130,7 @@ namespace vili::exceptions
         }
     };
 
-    class inconsistent_indentation : base_exception
+    class inconsistent_indentation : public base_exception
     {
     public:
         inconsistent_indentation(
@@ -116,7 +143,7 @@ namespace vili::exceptions
         }
     };
 
-    class too_much_indentation : base_exception
+    class too_much_indentation : public base_exception
     {
     public:
         too_much_indentation(int64_t indent_level, debug_info info)
@@ -124,6 +151,28 @@ namespace vili::exceptions
         {
             this->error(
                 "Block with {} levels of indentation is too indented", indent_level);
+        }
+    };
+
+    class unknown_template : public base_exception
+    {
+    public:
+        unknown_template(std::string_view template_name, debug_info info)
+            : base_exception("unknown_template", info)
+        {
+            this->error("Unable to get template with name '{}'", template_name);
+        }
+    };
+
+    class parsing_error : public base_exception
+    {
+    public:
+        parsing_error(
+            std::string_view source, size_t line, size_t column, debug_info info)
+            : base_exception("parsing_error", info)
+        {
+            this->error("Error while parsing vili content '{}' (line {} column {})",
+                source, line, column);
         }
     };
 }

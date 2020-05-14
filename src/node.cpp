@@ -142,6 +142,11 @@ namespace vili
         return true;
     }
 
+    node& node::operator[](const char* key)
+    {
+        return operator[](std::string(key));
+    }
+
     node& node::operator[](const std::string& key)
     {
         if (is<object>())
@@ -190,6 +195,36 @@ namespace vili
             throw exceptions::invalid_cast(
                 object_type, to_string(type()), EXC_INFO); // TODO: Add array type
         }
+    }
+
+    node::operator std::string_view() const
+    {
+        return as<string>();
+    }
+
+    node::operator const std::basic_string<char>&() const
+    {
+        return as<string>();
+    }
+
+    node::operator integer() const
+    {
+        return as<integer>();
+    }
+
+    node::operator number() const
+    {
+        return as<number>();
+    }
+
+    node::operator boolean() const
+    {
+        return as<boolean>();
+    }
+
+    node::operator unsigned() const
+    {
+        return as<integer>();
     }
 
     std::ostream& operator<<(std::ostream& os, const node& elem)
@@ -346,6 +381,37 @@ namespace vili
     }
 
     node& node::at(size_t index)
+    {
+        if (is<array>())
+        {
+            auto& vector = std::get<array>(m_data);
+            if (index < vector.size())
+            {
+                return vector.at(index);
+            }
+            throw exceptions::array_index_overflow(index, vector.size(), EXC_INFO);
+        }
+        throw exceptions::invalid_cast(array_type, to_string(type()), EXC_INFO);
+    }
+
+    const node& node::at(const std::string& key) const
+    {
+        if (is<object>())
+        {
+            auto& map = std::get<object>(m_data);
+            if (const auto element = map.find(key); element != map.end())
+            {
+                return element.value();
+            }
+            else
+            {
+                throw exceptions::unknown_child_node(key, EXC_INFO);
+            }
+        }
+        throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
+    }
+
+    const node& node::at(size_t index) const
     {
         if (is<array>())
         {

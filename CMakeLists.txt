@@ -5,8 +5,25 @@ project(vili)
 add_subdirectory(extlibs/fmt)
 add_subdirectory(extlibs/pegtl)
 
-file(GLOB VILI_HEADERS include/vili/*.hpp)
-file(GLOB VILI_SOURCES src/*.cpp)
+set(VILI_HEADERS
+    include/vili/config.hpp
+    include/vili/exceptions.hpp
+    include/vili/node.hpp
+    include/vili/types.hpp
+    include/vili/utils.hpp
+    include/vili/parser/actions.hpp
+    include/vili/parser/grammar.hpp
+    include/vili/parser/parser_state.hpp
+    include/vili/parser/parser.hpp
+)
+set(VILI_SOURCES
+    src/main.cpp
+    src/node.cpp
+    src/types.cpp
+    src/utils.cpp
+    src/parser/parser_state.cpp
+    src/parser/parser.cpp
+)
 
 add_executable(vili ${VILI_HEADERS} ${VILI_SOURCES})
 

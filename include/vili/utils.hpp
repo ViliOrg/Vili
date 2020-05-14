@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 namespace vili::utils::string
 {
@@ -10,4 +11,6 @@ namespace vili::utils::string
     bool is_float(const std::string& str);
     std::string truncate_float(const std::string& str);
     std::string quote(const std::string& str);
+    double to_double(std::string_view input);
+    long long to_long(std::string_view input);
 }

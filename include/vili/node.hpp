@@ -46,6 +46,7 @@ namespace vili
         template <class T> T& as();
         template <class T> const T& as() const;
 
+        node& operator[](const char* key);
         node& operator[](const std::string& key);
         node& operator[](size_t index);
 
@@ -65,6 +66,8 @@ namespace vili
 
         node& at(const std::string& key);
         node& at(size_t index);
+        const node& at(const std::string& key) const;
+        const node& at(size_t index) const;
 
         node_data& data();
 
@@ -72,6 +75,13 @@ namespace vili
         [[nodiscard]] bool empty() const;
 
         void clear();
+
+        operator std::string_view() const;
+        operator const std::string&() const;
+        operator integer() const;
+        operator number() const;
+        operator boolean() const;
+        operator unsigned() const;
     };
 
     template <node_type type> bool node::is()

@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cctype>
+#ifdef __cpp_lib_to_chars
+#include <charconv>
+#endif
 
 namespace vili::utils::string
 {
@@ -60,6 +63,94 @@ namespace vili::utils::string
     std::string quote(const std::string& str)
     {
         return "\"" + str + "\"";
+    }
+
+    double to_double(std::string_view input)
+    {
+#ifdef __cpp_lib_to_chars
+        double data_out;
+        std::from_chars(input.data(), input.data() + input.size(), data_out);
+        return data_out;
+#else
+        const char* num = input.data();
+        if (!num || !*num)
+        {
+            return 0;
+        }
+
+        int sign = 1;
+        double integerPart = 0.0;
+        double fractionPart = 0.0;
+        bool hasFraction = false;
+
+        /*Take care of +/- sign*/
+        if (*num == '-')
+        {
+            ++num;
+            sign = -1;
+        }
+        else if (*num == '+')
+        {
+            ++num;
+        }
+
+        while (*num != '\0')
+        {
+            if (*num >= '0' && *num <= '9')
+            {
+                integerPart = integerPart * 10 + (*num - '0');
+            }
+            else if (*num == '.')
+            {
+                hasFraction = true;
+                ++num;
+                break;
+            }
+            else
+            {
+                return sign * integerPart;
+            }
+            ++num;
+        }
+
+        if (hasFraction)
+        {
+            double fractionExpo = 0.1;
+
+            while (*num != '\0')
+            {
+                if (*num >= '0' && *num <= '9')
+                {
+                    fractionPart += fractionExpo * (*num - '0');
+                    fractionExpo *= 0.1;
+                }
+                else
+                {
+                    return sign * (integerPart + fractionPart);
+                }
+                ++num;
+            }
+        }
+
+        return sign * (integerPart + fractionPart);
+#endif
+    }
+
+    long long to_long(std::string_view input)
+    {
+#ifdef __cpp_lib_to_chars
+        long long data_out;
+        std::from_chars(input.data(), input.data() + input.size(), data_out);
+        return data_out;
+#else
+        long long data_out = 0;
+        const char* str = input.data();
+        while (*str)
+        {
+            data_out = data_out * 10 + (*str++ - '0');
+        }
+        return data_out;
+#endif
     }
 
     std::string replace(
