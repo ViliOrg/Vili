@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stack>
+#include <unordered_map>
 
 #include <vili/node.hpp>
 

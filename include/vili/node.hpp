@@ -86,7 +86,7 @@ namespace vili
 
     template <node_type type_enum> bool node::is()
     {
-        return is<constexpr decltype(node_helper_t<type_enum>::type)>();
+        return is<decltype(node_helper_t<type_enum>::type)>();
     }
 
     template <class T> bool node::is() const
