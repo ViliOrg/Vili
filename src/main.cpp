@@ -5,7 +5,8 @@
 int main(int argc, char** argv)
 {
     vili::node root = vili::parser::from_file("big_test.vili");
-    std::cout << root.dump() << std::endl;
+    root["sprites"]["background"].erase("path");
+    std::cout << root << std::endl;
 
     return 0;
 }

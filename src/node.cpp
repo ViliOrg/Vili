@@ -75,6 +75,16 @@ namespace vili
         m_data = copy.m_data;
     }
 
+    node::node(node&& move) noexcept
+    {
+        m_data = std::move(move.m_data);
+    }
+
+    void node::operator=(const node& copy)
+    {
+        m_data = copy.m_data;
+    }
+
     node_type node::type() const
     {
         if (is_null())
@@ -144,16 +154,7 @@ namespace vili
 
     node& node::operator[](const size_t index)
     {
-        if (is<array>())
-        {
-            auto& vector = std::get<array>(m_data);
-            if (index < vector.size())
-            {
-                return vector.at(index);
-            }
-            throw exceptions::array_index_overflow(index, vector.size(), EXC_INFO);
-        }
-        throw exceptions::invalid_cast(array_type, to_string(type()), EXC_INFO);
+        return this->at(index);
     }
 
     size_t node::size() const
@@ -167,6 +168,34 @@ namespace vili
             return std::get<object>(m_data).size();
         }
         throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
+    }
+
+    bool node::empty() const
+    {
+        return this->size() == 0;
+    }
+
+    void node::clear()
+    {
+        if (is<array>())
+        {
+            std::get<array>(m_data).clear();
+        }
+        else if (is<object>())
+        {
+            std::get<object>(m_data).clear();
+        }
+        else
+        {
+            throw exceptions::invalid_cast(
+                object_type, to_string(type()), EXC_INFO); // TODO: Add array type
+        }
+    }
+
+    std::ostream& operator<<(std::ostream& os, const node& elem)
+    {
+        os << elem.dump();
+        return os;
     }
 
     void node::push(const node& value)
@@ -207,6 +236,82 @@ namespace vili
         }
     }
 
+    void node::erase(size_t index)
+    {
+        if (is<array>())
+        {
+            auto& vector = std::get<array>(m_data);
+            if (index < vector.size())
+            {
+                vector.erase(vector.cbegin() + index);
+            }
+            else
+            {
+                throw exceptions::array_index_overflow(index, vector.size(), EXC_INFO);
+            }
+        }
+        else
+        {
+            throw exceptions::invalid_cast(array_type, to_string(type()), EXC_INFO);
+        }
+    }
+
+    void node::erase(size_t begin, size_t end)
+    {
+        if (is<array>())
+        {
+            auto& vector = std::get<array>(m_data);
+            if (begin < vector.size() && end < vector.size())
+            {
+                vector.erase(vector.cbegin() + begin, vector.cbegin() + end);
+            }
+            else
+            {
+                throw exceptions::array_index_overflow(
+                    begin, vector.size(), EXC_INFO); // TODO: Add end bound check
+            }
+        }
+        else
+        {
+            throw exceptions::invalid_cast(array_type, to_string(type()), EXC_INFO);
+        }
+    }
+
+    void node::erase(const std::string& key)
+    {
+        if (is<object>())
+        {
+            auto& map = std::get<object>(m_data);
+            if (const auto& element = map.find(key); element != map.end())
+            {
+                map.erase(element);
+            }
+            else
+            {
+                throw exceptions::unknown_child_node(key, EXC_INFO);
+            }
+        }
+        else
+        {
+            throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
+        }
+    }
+
+    node& node::front()
+    {
+        if (is<array>())
+        {
+            return std::get<array>(m_data).front();
+        }
+        if (is<object>())
+        {
+            auto& map = std::get<object>(m_data);
+            return map.begin().value();
+        }
+        throw exceptions::invalid_cast(
+            object_type, to_string(type()), EXC_INFO); // TODO: Add array
+    }
+
     node& node::back()
     {
         if (is<array>())
@@ -238,5 +343,24 @@ namespace vili
             }
         }
         throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
+    }
+
+    node& node::at(size_t index)
+    {
+        if (is<array>())
+        {
+            auto& vector = std::get<array>(m_data);
+            if (index < vector.size())
+            {
+                return vector.at(index);
+            }
+            throw exceptions::array_index_overflow(index, vector.size(), EXC_INFO);
+        }
+        throw exceptions::invalid_cast(array_type, to_string(type()), EXC_INFO);
+    }
+
+    node_data& node::data()
+    {
+        return m_data;
     }
 }

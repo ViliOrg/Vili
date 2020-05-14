@@ -106,7 +106,7 @@ namespace vili::parser
         void set_active_identifier(const std::string& identifier);
         void open_block();
         void close_block();
-        void push(node data);
+        void push(node&& data);
         void push_template();
         [[nodiscard]] node get_template(const std::string& template_name) const;
     };
@@ -171,22 +171,23 @@ namespace vili::parser
         m_stack.pop();
     }
 
-    void state::push(const node data)
+    void state::push(node&& data)
     {
         node& top = *m_stack.top().item;
+        const bool is_container = data.is_container();
         if (top.is<array>())
         {
             top.push(data);
         }
         else if (top.is<object>())
         {
-            top.insert(m_identifier, data);
+            top.insert(m_identifier, std::move(data));
         }
         else
         {
             throw std::runtime_error("Should not happen");
         }
-        if (data.is_container())
+        if (is_container)
         {
             m_stack.emplace(&top.back(), 0);
         }
@@ -195,7 +196,7 @@ namespace vili::parser
     void state::push_template()
     {
         node& top = *m_stack.top().item;
-        if (top.size() == 0)
+        if (top.empty())
             m_templates[m_identifier] = top;
         else
             m_templates[m_identifier] = top.back();
