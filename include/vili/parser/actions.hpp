@@ -1,7 +1,5 @@
 #pragma once
 
-#include <charconv>
-
 #include <vili/parser/grammar.hpp>
 #include <vili/parser/parser_state.hpp>
 
