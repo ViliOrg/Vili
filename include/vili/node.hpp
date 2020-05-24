@@ -8,6 +8,22 @@
 
 namespace vili
 {
+    class node;
+
+    class node_iterator
+    {
+    private:
+        std::variant<array::value_type*, object::value_type*> m_ptr;
+
+    public:
+        node_iterator(array::value_type* value);
+        node_iterator(object::value_type* value);
+        node_iterator(const node_iterator& other_it);
+        node_iterator& operator++();
+        bool operator!=(const node_iterator& rhs) const;
+        node& operator*();
+    };
+
     using node_data
         = std::variant<std::monostate, object, array, integer, number, boolean, string>;
     /**
@@ -63,6 +79,10 @@ namespace vili
 
         node& front();
         node& back();
+
+        node_iterator begin();
+        node_iterator end();
+        object& items();
 
         node& at(const std::string& key);
         node& at(size_t index);

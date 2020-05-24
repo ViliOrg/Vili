@@ -4,6 +4,61 @@
 
 namespace vili
 {
+    node_iterator::node_iterator(array::value_type* value)
+        : m_ptr(value)
+    {
+    }
+
+    node_iterator::node_iterator(object::value_type* value)
+        : m_ptr(value)
+    {
+    }
+
+    node_iterator::node_iterator(const node_iterator& other_it)
+        : m_ptr(other_it.m_ptr)
+    {
+    }
+
+    node_iterator& node_iterator::operator++()
+    {
+        if (std::holds_alternative<array::value_type*>(m_ptr))
+        {
+            ++std::get<array::value_type*>(m_ptr);
+        }
+        if (std::holds_alternative<object::value_type*>(m_ptr))
+        {
+            ++std::get<object::value_type*>(m_ptr);
+        }
+
+        return *this;
+    }
+
+    bool node_iterator::operator!=(const node_iterator& rhs) const
+    {
+        if (std::holds_alternative<array::value_type*>(m_ptr))
+        {
+            return std::get<array::value_type*>(m_ptr)
+                != std::get<array::value_type*>(rhs.m_ptr);
+        }
+        if (std::holds_alternative<object::value_type*>(m_ptr))
+        {
+            return std::get<object::value_type*>(m_ptr)
+                != std::get<object::value_type*>(rhs.m_ptr);
+        }
+    }
+
+    node& node_iterator::operator*()
+    {
+        if (std::holds_alternative<array::value_type*>(m_ptr))
+        {
+            return *std::get<array::value_type*>(m_ptr);
+        }
+        if (std::holds_alternative<object::value_type*>(m_ptr))
+        {
+            return std::get<object::value_type*>(m_ptr)->second;
+        }
+    }
+
     std::string node::dump_array() const
     {
         const auto& vector = std::get<array>(m_data);
@@ -361,6 +416,44 @@ namespace vili
         }
         throw exceptions::invalid_cast(
             object_type, to_string(type()), EXC_INFO); // TODO: Add array
+    }
+
+    node_iterator node::begin()
+    {
+        if (is<array>())
+        {
+            auto& vector = std::get<array>(m_data);
+            return std::get<array>(m_data).data();
+        }
+        if (is<object>())
+        {
+            const auto* ptr = std::get<object>(m_data).data();
+            return const_cast<object::value_type*>(ptr);
+        }
+    }
+
+    node_iterator node::end()
+    {
+        if (is<array>())
+        {
+            auto& vector = std::get<array>(m_data);
+            return vector.data() + vector.size();
+        }
+        if (is<object>())
+        {
+            auto& map = std::get<object>(m_data);
+            const auto ptr = map.data() + map.size();
+            return const_cast<object::value_type*>(ptr);
+        }
+    }
+
+    object& node::items()
+    {
+        if (is<object>())
+        {
+            auto& map = std::get<object>(m_data);
+            return map;
+        }
     }
 
     node& node::at(const std::string& key)
