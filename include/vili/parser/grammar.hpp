@@ -55,8 +55,11 @@ namespace vili::parser::rules
 
     // Templates
     struct template_keyword : peg::string<'t', 'e', 'm', 'p', 'l', 'a', 't', 'e'> {};
-    struct template_decl : peg::seq<peg::bol, template_keyword, peg::blank, affectation, data> {}; // TODO: Include complex types
-    struct template_usage : peg::identifier {};
+    struct template_identifier : peg::identifier {};
+    struct template_decl : peg::seq<peg::bol, template_keyword, peg::blank, template_identifier, peg::pad<peg::one<':'>, peg::blank>, inline_element> {}; // TODO: Include complex types
+    struct template_identifier_usage : template_identifier {};
+    struct template_specialization : peg::sor<array, brace_based_object> {};
+    struct template_usage : peg::seq<template_identifier_usage, peg::opt<peg::seq<peg::star<peg::blank>, template_specialization>>> {};
 
     // Nodes
     struct node : peg::seq<affectation, element> {};

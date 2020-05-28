@@ -1,6 +1,12 @@
 #include <iostream>
 #include <iterator>
 #include <vili/node.hpp>
+#include <vili/utils.hpp>
+
+std::string indent(const std::string& text)
+{
+    return vili::utils::string::replace(text, "\n", "\n    ");
+}
 
 namespace vili
 {
@@ -74,11 +80,24 @@ namespace vili
     std::string node::dump_object(bool root) const
     {
         const auto& map = std::get<object>(m_data);
-        std::string dump_value = (root) ? "" : "{";
+        std::string dump_value = (root) ? "" : "{\n";
+        size_t index = 0;
+        const size_t max_size = this->size();
         for (const auto& [key, value] : map)
         {
             if (!value.is_null())
-                dump_value += key + ": " + value.dump() + ", ";
+            {
+                dump_value += "    " + key + ": " + indent(value.dump());
+                if (index < max_size - 1)
+                {
+                    dump_value += ",\n";
+                }
+                else
+                {
+                    dump_value += "\n";
+                }
+            }
+            index++;
         }
         if (!root)
             dump_value += "}";
@@ -333,7 +352,11 @@ namespace vili
 
     void node::merge(node& value)
     {
-        if (is<object>() && value.is<object>())
+        if (is_primitive() && value.is_primitive())
+        {
+            m_data = value.m_data;
+        }
+        else if (is<object>() && value.is<object>())
         {
             for (auto [key, val] : value.items())
             {
@@ -346,6 +369,24 @@ namespace vili
             {
                 this->push(node);
             }
+        }
+        else
+        {
+            throw exceptions::invalid_merge(
+                to_string(type()), to_string(value.type()), VILI_EXC_INFO);
+        }
+    }
+
+    bool node::contains(const std::string& key) const
+    {
+        if (is<object>())
+        {
+            auto& map = std::get<object>(m_data);
+            if (map.find(key) != map.end())
+            {
+                return true;
+            }
+            return false;
         }
         else
         {
@@ -475,6 +516,15 @@ namespace vili
     }
 
     object& node::items()
+    {
+        if (is<object>())
+        {
+            auto& map = std::get<object>(m_data);
+            return map;
+        }
+    }
+
+    const object& node::items() const
     {
         if (is<object>())
         {

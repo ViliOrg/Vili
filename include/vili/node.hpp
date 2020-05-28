@@ -73,6 +73,7 @@ namespace vili
         void insert(size_t index, const node& value);
         void insert(const std::string& key, node value);
         void merge(node& value);
+        bool contains(const std::string& key) const;
 
         void erase(size_t index);
         void erase(size_t begin, size_t end);
@@ -84,6 +85,7 @@ namespace vili
         node_iterator begin();
         node_iterator end();
         object& items();
+        const object& items() const;
 
         node& at(const std::string& key);
         node& at(size_t index);

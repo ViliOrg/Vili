@@ -99,6 +99,18 @@ namespace vili::exceptions
         }
     };
 
+    class invalid_merge : public base_exception
+    {
+    public:
+        invalid_merge(std::string_view merge_base_type, std::string_view merge_type,
+            debug_info info)
+            : base_exception("invalid_merge", info)
+        {
+            this->error("Tried to merge a value of type <{}> with a value of type <{}>",
+                merge_base_type, merge_type);
+        }
+    };
+
     class unknown_child_node : public base_exception
     {
     public:

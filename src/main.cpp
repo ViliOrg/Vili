@@ -5,11 +5,11 @@
 #include <chrono>
 #include <fstream>
 
-int main(int argc, char** argv)
+void test_colors()
 {
     vili::node root = vili::parser::from_string(
         "data: [{r:10, g:20, b:30}, {r: 20, g: 40, b:60}, {r:30, g:60, b:90}]");
-    for (auto test : root["data"])
+    for (const vili::node& test : root["data"])
     {
         for (auto [color_name, color_value] : test.items())
         {
@@ -17,6 +17,23 @@ int main(int argc, char** argv)
         }
         std::cout << test << std::endl;
     }
+}
 
+void test_mount()
+{
+    vili::node root = vili::parser::from_file("mount.vili");
+    std::cout << "DUMP : " << root.dump() << std::endl;
+}
+
+int main(int argc, char** argv)
+{
+    try
+    {
+        test_mount();
+    }
+    catch (std::exception& e)
+    {
+        std::cerr << e.what() << std::endl;
+    }
     return 0;
 }

@@ -42,7 +42,7 @@ namespace vili::parser
         }
     };
 
-    template <> struct action<rules::template_usage>
+    template <> struct action<rules::template_identifier_usage>
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
@@ -63,7 +63,7 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            state.set_active_identifier(in.string());
+            state.set_active_identifier(std::move(in.string()));
         }
     };
 
@@ -72,6 +72,7 @@ namespace vili::parser
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
             state.push(vili::array {});
+            state.open_block();
         }
     };
 
@@ -88,6 +89,7 @@ namespace vili::parser
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
             state.push(vili::object {});
+            state.open_block();
         }
     };
 
@@ -104,6 +106,7 @@ namespace vili::parser
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
             state.push(vili::object {});
+            state.open_block();
             state.use_indent();
         }
     };
@@ -121,6 +124,14 @@ namespace vili::parser
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
             state.set_indent(0);
+        }
+    };
+
+    template <> struct action<rules::template_identifier>
+    {
+        template <class ParseInput> static void apply(const ParseInput& in, state& state)
+        {
+            state.set_active_template(std::move(in.string()));
         }
     };
 
