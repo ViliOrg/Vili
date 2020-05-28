@@ -24,8 +24,8 @@ namespace vili::exceptions
         {
         }
     };
-#define EXC_INFO_WRAPPER() exceptions::debug_info(__FILE__, __LINE__, __FUNCTION__)
-#define EXC_INFO EXC_INFO_WRAPPER()
+#define VILI_EXC_INFO_WRAPPER() exceptions::debug_info(__FILE__, __LINE__, __FUNCTION__)
+#define VILI_EXC_INFO VILI_EXC_INFO_WRAPPER()
     class base_exception : public std::exception
     {
     private:

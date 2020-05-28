@@ -72,6 +72,7 @@ namespace vili
         void emplace(const std::string& key, value_type&& value);
         void insert(size_t index, const node& value);
         void insert(const std::string& key, node value);
+        void merge(node& value);
 
         void erase(size_t index);
         void erase(size_t begin, size_t end);
@@ -99,6 +100,7 @@ namespace vili
         operator std::string_view() const;
         operator const std::string&() const;
         operator integer() const;
+        operator int() const;
         operator number() const;
         operator boolean() const;
         operator unsigned() const;
@@ -118,7 +120,8 @@ namespace vili
     {
         if (is<T>())
             return std::get<T>(m_data);
-        throw exceptions::invalid_cast(typeid(T).name(), to_string(type()), EXC_INFO);
+        throw exceptions::invalid_cast(
+            typeid(T).name(), to_string(type()), VILI_EXC_INFO);
     }
 
     template <class value_type> void node::emplace(size_t index, value_type&& value)
@@ -130,7 +133,7 @@ namespace vili
         }
         else
         {
-            throw exceptions::invalid_cast(array_type, to_string(type()), EXC_INFO);
+            throw exceptions::invalid_cast(array_type, to_string(type()), VILI_EXC_INFO);
         }
     }
 
@@ -144,7 +147,7 @@ namespace vili
         }
         else
         {
-            throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
+            throw exceptions::invalid_cast(object_type, to_string(type()), VILI_EXC_INFO);
         }
     }
 
@@ -152,7 +155,8 @@ namespace vili
     {
         if (is<T>())
             return std::get<T>(m_data);
-        throw exceptions::invalid_cast(typeid(T).name(), to_string(type()), EXC_INFO);
+        throw exceptions::invalid_cast(
+            typeid(T).name(), to_string(type()), VILI_EXC_INFO);
     }
 
     std::ostream& operator<<(std::ostream& os, const node& elem);

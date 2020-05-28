@@ -209,7 +209,7 @@ namespace vili
             auto& map = std::get<object>(m_data);
             return map[key];
         }
-        throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
+        throw exceptions::invalid_cast(object_type, to_string(type()), VILI_EXC_INFO);
     }
 
     node& node::operator[](const size_t index)
@@ -227,7 +227,7 @@ namespace vili
         {
             return std::get<object>(m_data).size();
         }
-        throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
+        throw exceptions::invalid_cast(object_type, to_string(type()), VILI_EXC_INFO);
     }
 
     bool node::empty() const
@@ -248,7 +248,7 @@ namespace vili
         else
         {
             throw exceptions::invalid_cast(
-                object_type, to_string(type()), EXC_INFO); // TODO: Add array type
+                object_type, to_string(type()), VILI_EXC_INFO); // TODO: Add array type
         }
     }
 
@@ -263,6 +263,11 @@ namespace vili
     }
 
     node::operator integer() const
+    {
+        return as<integer>();
+    }
+
+    node::operator int() const
     {
         return as<integer>();
     }
@@ -296,7 +301,7 @@ namespace vili
         }
         else
         {
-            throw exceptions::invalid_cast(array_type, to_string(type()), EXC_INFO);
+            throw exceptions::invalid_cast(array_type, to_string(type()), VILI_EXC_INFO);
         }
     }
 
@@ -309,7 +314,7 @@ namespace vili
         }
         else
         {
-            throw exceptions::invalid_cast(array_type, to_string(type()), EXC_INFO);
+            throw exceptions::invalid_cast(array_type, to_string(type()), VILI_EXC_INFO);
         }
     }
 
@@ -322,7 +327,29 @@ namespace vili
         }
         else
         {
-            throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
+            throw exceptions::invalid_cast(object_type, to_string(type()), VILI_EXC_INFO);
+        }
+    }
+
+    void node::merge(node& value)
+    {
+        if (is<object>() && value.is<object>())
+        {
+            for (auto [key, val] : value.items())
+            {
+                (*this)[key] = val;
+            }
+        }
+        else if (is<array>() && value.is<array>())
+        {
+            for (node& node : value)
+            {
+                this->push(node);
+            }
+        }
+        else
+        {
+            throw exceptions::invalid_cast(object_type, to_string(type()), VILI_EXC_INFO);
         }
     }
 
@@ -337,12 +364,13 @@ namespace vili
             }
             else
             {
-                throw exceptions::array_index_overflow(index, vector.size(), EXC_INFO);
+                throw exceptions::array_index_overflow(
+                    index, vector.size(), VILI_EXC_INFO);
             }
         }
         else
         {
-            throw exceptions::invalid_cast(array_type, to_string(type()), EXC_INFO);
+            throw exceptions::invalid_cast(array_type, to_string(type()), VILI_EXC_INFO);
         }
     }
 
@@ -358,12 +386,12 @@ namespace vili
             else
             {
                 throw exceptions::array_index_overflow(
-                    begin, vector.size(), EXC_INFO); // TODO: Add end bound check
+                    begin, vector.size(), VILI_EXC_INFO); // TODO: Add end bound check
             }
         }
         else
         {
-            throw exceptions::invalid_cast(array_type, to_string(type()), EXC_INFO);
+            throw exceptions::invalid_cast(array_type, to_string(type()), VILI_EXC_INFO);
         }
     }
 
@@ -378,12 +406,12 @@ namespace vili
             }
             else
             {
-                throw exceptions::unknown_child_node(key, EXC_INFO);
+                throw exceptions::unknown_child_node(key, VILI_EXC_INFO);
             }
         }
         else
         {
-            throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
+            throw exceptions::invalid_cast(object_type, to_string(type()), VILI_EXC_INFO);
         }
     }
 
@@ -396,10 +424,10 @@ namespace vili
         if (is<object>())
         {
             auto& map = std::get<object>(m_data);
-            return map.begin().value();
+            return map.begin()->second;
         }
         throw exceptions::invalid_cast(
-            object_type, to_string(type()), EXC_INFO); // TODO: Add array
+            object_type, to_string(type()), VILI_EXC_INFO); // TODO: Add array
     }
 
     node& node::back()
@@ -411,11 +439,11 @@ namespace vili
         if (is<object>())
         {
             auto& map = std::get<object>(m_data);
-            auto& ref = (map.end() - 1).value();
+            auto& ref = map.rbegin()->second;
             return ref;
         }
         throw exceptions::invalid_cast(
-            object_type, to_string(type()), EXC_INFO); // TODO: Add array
+            object_type, to_string(type()), VILI_EXC_INFO); // TODO: Add array
     }
 
     node_iterator node::begin()
@@ -427,8 +455,8 @@ namespace vili
         }
         if (is<object>())
         {
-            const auto* ptr = std::get<object>(m_data).data();
-            return const_cast<object::value_type*>(ptr);
+            auto& map = std::get<object>(m_data);
+            return reinterpret_cast<object::value_type*>(&map);
         }
     }
 
@@ -442,8 +470,7 @@ namespace vili
         if (is<object>())
         {
             auto& map = std::get<object>(m_data);
-            const auto ptr = map.data() + map.size();
-            return const_cast<object::value_type*>(ptr);
+            return reinterpret_cast<object::value_type*>(&map) + map.size();
         }
     }
 
@@ -463,14 +490,14 @@ namespace vili
             auto& map = std::get<object>(m_data);
             if (auto element = map.find(key); element != map.end())
             {
-                return element.value();
+                return element->second;
             }
             else
             {
-                throw exceptions::unknown_child_node(key, EXC_INFO);
+                throw exceptions::unknown_child_node(key, VILI_EXC_INFO);
             }
         }
-        throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
+        throw exceptions::invalid_cast(object_type, to_string(type()), VILI_EXC_INFO);
     }
 
     node& node::at(size_t index)
@@ -482,9 +509,9 @@ namespace vili
             {
                 return vector.at(index);
             }
-            throw exceptions::array_index_overflow(index, vector.size(), EXC_INFO);
+            throw exceptions::array_index_overflow(index, vector.size(), VILI_EXC_INFO);
         }
-        throw exceptions::invalid_cast(array_type, to_string(type()), EXC_INFO);
+        throw exceptions::invalid_cast(array_type, to_string(type()), VILI_EXC_INFO);
     }
 
     const node& node::at(const std::string& key) const
@@ -494,14 +521,14 @@ namespace vili
             auto& map = std::get<object>(m_data);
             if (const auto element = map.find(key); element != map.end())
             {
-                return element.value();
+                return element->second;
             }
             else
             {
-                throw exceptions::unknown_child_node(key, EXC_INFO);
+                throw exceptions::unknown_child_node(key, VILI_EXC_INFO);
             }
         }
-        throw exceptions::invalid_cast(object_type, to_string(type()), EXC_INFO);
+        throw exceptions::invalid_cast(object_type, to_string(type()), VILI_EXC_INFO);
     }
 
     const node& node::at(size_t index) const
@@ -513,9 +540,9 @@ namespace vili
             {
                 return vector.at(index);
             }
-            throw exceptions::array_index_overflow(index, vector.size(), EXC_INFO);
+            throw exceptions::array_index_overflow(index, vector.size(), VILI_EXC_INFO);
         }
-        throw exceptions::invalid_cast(array_type, to_string(type()), EXC_INFO);
+        throw exceptions::invalid_cast(array_type, to_string(type()), VILI_EXC_INFO);
     }
 
     node_data& node::data()

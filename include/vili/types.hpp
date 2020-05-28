@@ -3,11 +3,11 @@
 #include <string>
 #include <vector>
 
-#ifdef VILI_KEEP_ORDER
-#include <tsl/ordered_map.h>
-#else
-#include <unordered_map>
-#endif
+// #include <tsl/ordered_map.h>
+// #include <tsl/fifo_map.hpp>
+#include <sstream>
+//#include <unordered_map>
+#include <tsl/fifo_map.hpp>
 
 namespace vili
 {
@@ -23,13 +23,12 @@ namespace vili
     class node;
 
     using null = void*;
-#ifdef VILI_KEEP_ORDER
-    using object = tsl::ordered_map<std::string, node, std::hash<std::string>,
+
+    //using object = std::unordered_map<std::string, node>;
+    /*using object = tsl::ordered_map<std::string, node, std::hash<std::string>,
         std::equal_to<std::string>, std::allocator<std::pair<std::string, node>>,
-        std::vector<std::pair<std::string, node>>>;
-#else
-    using object = std::unordered_map<std::string, node>;
-#endif
+        std::vector<std::pair<std::string, node>>>;*/
+    using object = nlohmann::fifo_map<std::string, node>;
     using array = std::vector<node>;
     using integer = long long int;
     using number = double;

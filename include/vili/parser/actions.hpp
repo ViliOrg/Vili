@@ -53,7 +53,7 @@ namespace vili::parser
             catch (exceptions::unknown_template& e)
             {
                 throw exceptions::parsing_error(in.position().source, in.position().line,
-                    in.position().byte_in_line, EXC_INFO)
+                    in.position().byte_in_line, VILI_EXC_INFO)
                     .nest(e);
             }
         }

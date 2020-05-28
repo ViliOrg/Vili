@@ -16,7 +16,7 @@ namespace vili::parser
         }
         if (indent % m_indent_base && m_stack.top().indent)
         {
-            throw exceptions::inconsistent_indentation(indent, m_indent_base, EXC_INFO);
+            throw exceptions::inconsistent_indentation(indent, m_indent_base, VILI_EXC_INFO);
         }
         indent /= m_indent_base; // Normalize indentation to "levels"
         if (m_indent_current > indent)
@@ -35,7 +35,7 @@ namespace vili::parser
         {
             if (m_indent_current - indent > 1)
             {
-                throw exceptions::too_much_indentation(indent, EXC_INFO);
+                throw exceptions::too_much_indentation(indent, VILI_EXC_INFO);
             }
         }
         m_indent_current = indent;
@@ -99,6 +99,6 @@ namespace vili::parser
         {
             return it->second;
         }
-        throw exceptions::unknown_template(template_name, EXC_INFO);
+        throw exceptions::unknown_template(template_name, VILI_EXC_INFO);
     }
 }
