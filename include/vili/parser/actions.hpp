@@ -115,7 +115,16 @@ namespace vili::parser
     {
         template <class ParseInput> static void apply(const ParseInput& in, state& state)
         {
-            state.set_indent(in.string_view().size());
+            try
+            {
+                state.set_indent(in.string_view().size());
+            }
+            catch (vili::exceptions::base_exception& e)
+            {
+                throw exceptions::parsing_error(in.position().source, in.position().line,
+                    in.position().byte_in_line, VILI_EXC_INFO)
+                    .nest(e);
+            }
         }
     };
 

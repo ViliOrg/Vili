@@ -288,7 +288,7 @@ namespace vili
 
     node::operator int() const
     {
-        return as<integer>();
+        return static_cast<int>(as<integer>());
     }
 
     node::operator number() const
@@ -303,7 +303,7 @@ namespace vili
 
     node::operator unsigned() const
     {
-        return as<integer>();
+        return static_cast<unsigned>(as<integer>());
     }
 
     std::ostream& operator<<(std::ostream& os, const node& elem)

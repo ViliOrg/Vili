@@ -34,7 +34,7 @@ namespace vili::parser
         }
         else if (m_indent_current < indent)
         {
-            if (m_indent_current - indent > 1)
+            if (indent - m_indent_current > 1)
             {
                 throw exceptions::too_much_indentation(indent, VILI_EXC_INFO);
             }
@@ -44,7 +44,7 @@ namespace vili::parser
 
     void state::use_indent()
     {
-        m_stack.top().indent = m_indent_current + 1;
+        m_stack.top().indent = static_cast<int>(m_indent_current) + 1;
     }
 
     void state::set_active_identifier(std::string&& identifier)
