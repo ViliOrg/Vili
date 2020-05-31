@@ -67,24 +67,3 @@ TEST_CASE("Unexpected symbols", "[vili.parser]")
             vili::parser::from_string("a: !"), vili::exceptions::parsing_error);
     }
 }
-
-TEST_CASE("Integers", "[vili.parser]")
-{
-    SECTION("Simple integers")
-    {
-        REQUIRE(vili::parser::from_string("a: 22")["a"].as<vili::integer>() == 22);
-        REQUIRE(vili::parser::from_string("a: 2000")["a"].as<vili::integer>() == 2000);
-    }
-    SECTION("Positive integers")
-    {
-        REQUIRE(vili::parser::from_string("a: +0")["a"].as<vili::integer>() == 0);
-        REQUIRE(vili::parser::from_string("a: +1")["a"].as<vili::integer>() == 1);
-        REQUIRE(vili::parser::from_string("a: +1234")["a"].as<vili::integer>() == 1234);
-    }
-    SECTION("Negative integers")
-    {
-        REQUIRE(vili::parser::from_string("a:-0")["a"].as<vili::integer>() == 0);
-        REQUIRE(vili::parser::from_string("a: -1")["a"].as<vili::integer>() == -1);
-        REQUIRE(vili::parser::from_string("a: -1234")["a"].as<vili::integer>() == -1234);
-    }
-}

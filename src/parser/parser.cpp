@@ -1,6 +1,7 @@
 #include <vili/node.hpp>
 #include <vili/parser/actions.hpp>
 #include <vili/parser/grammar.hpp>
+#include <vili/parser/grammar_errors.hpp>
 #include <vili/parser/parser_state.hpp>
 #include <vili/types.hpp>
 
@@ -19,10 +20,11 @@ namespace vili::parser
         state parser_state;
         try
         {
-            peg::parse<vili::parser::rules::grammar, vili::parser::action>(
-                input, parser_state);
-            /*peg::standard_trace<vili::parser::rules::grammar, vili::parser::action>(
-                std::forward<input_type&&>(input), parser_state);*/
+            peg::parse<vili::parser::rules::grammar, vili::parser::action,
+                vili::parser::control>(std::forward<input_type&&>(input), parser_state);
+            // std::cout << "Begin parsing" << std::endl;
+            /*peg::standard_trace<vili::parser::rules::grammar, vili::parser::action,
+                vili::parser::control>(std::forward<input_type&&>(input), parser_state);*/
         }
         catch (peg::parse_error& e)
         {
