@@ -35,10 +35,10 @@ namespace vili::parser::rules
     struct element : peg::sor<data, array, object, template_usage> {};
 
     // Arrays
-    struct array_elements : peg::list<inline_element, peg::one<','>, peg::space> {};
+    struct array_elements : peg::list_must<inline_element, peg::one<','>, peg::space> {};
     struct open_array : peg::one<'['> {};
     struct close_array : peg::one<']'> {};
-    struct array : peg::seq<open_array, peg::pad_opt<array_elements, peg::space>, close_array> {};
+    struct array : peg::seq<open_array, peg::pad_opt<array_elements, peg::space>, peg::must<close_array>> {};
 
     // Objects
     struct node;
@@ -46,8 +46,8 @@ namespace vili::parser::rules
     struct open_object : peg::one<'{'> {};
     struct close_object : peg::one<'}'> {};
     struct comma_or_newline : peg::seq<peg::pad<peg::sor<peg::one<','>, peg::eol>, peg::space>, peg::star<peg::space>> {};
-    struct object_elements : peg::list<inline_node, comma_or_newline> {};
-    struct brace_based_object : peg::seq<open_object, peg::pad_opt<object_elements, peg::space>, close_object> {};
+    struct object_elements : peg::list_must<inline_node, comma_or_newline> {};
+    struct brace_based_object : peg::seq<open_object, peg::pad_opt<object_elements, peg::space>, peg::must<close_object>> {};
     struct object : peg::sor<brace_based_object, indent_based_object> {};
 
     // Comments
@@ -62,7 +62,7 @@ namespace vili::parser::rules
     struct template_usage : peg::seq<template_identifier_usage, peg::opt<peg::seq<peg::star<peg::blank>, template_specialization>>> {};
 
     // Nodes
-    struct node : peg::seq<affectation, element> {};
+    struct node : peg::seq<affectation, peg::must<element>> {};
     struct full_node : peg::seq<indent, node, peg::opt<peg::eol>> {};
     struct empty_line : peg::seq<peg::star<peg::blank>, peg::eol> {};
     struct line : peg::sor<empty_line, inline_comment, template_decl, full_node> {};
