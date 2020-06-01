@@ -15,7 +15,7 @@ namespace vili
     {
     }
 
-    node_iterator::node_iterator(object::value_type* value)
+    node_iterator::node_iterator(object::iterator value)
         : m_ptr(value)
     {
     }
@@ -31,9 +31,9 @@ namespace vili
         {
             ++std::get<array::value_type*>(m_ptr);
         }
-        if (std::holds_alternative<object::value_type*>(m_ptr))
+        if (std::holds_alternative<object::iterator>(m_ptr))
         {
-            ++std::get<object::value_type*>(m_ptr);
+            ++std::get<object::iterator>(m_ptr);
         }
 
         return *this;
@@ -46,10 +46,10 @@ namespace vili
             return std::get<array::value_type*>(m_ptr)
                 != std::get<array::value_type*>(rhs.m_ptr);
         }
-        if (std::holds_alternative<object::value_type*>(m_ptr))
+        if (std::holds_alternative<object::iterator>(m_ptr))
         {
-            return std::get<object::value_type*>(m_ptr)
-                != std::get<object::value_type*>(rhs.m_ptr);
+            return std::get<object::iterator>(m_ptr)
+                != std::get<object::iterator>(rhs.m_ptr);
         }
     }
 
@@ -59,9 +59,9 @@ namespace vili
         {
             return *std::get<array::value_type*>(m_ptr);
         }
-        if (std::holds_alternative<object::value_type*>(m_ptr))
+        if (std::holds_alternative<object::iterator>(m_ptr))
         {
-            return std::get<object::value_type*>(m_ptr)->second;
+            return std::get<object::iterator>(m_ptr)->second;
         }
     }
 
@@ -497,7 +497,7 @@ namespace vili
         if (is<object>())
         {
             auto& map = std::get<object>(m_data);
-            return reinterpret_cast<object::value_type*>(&map);
+            return map.begin();
         }
     }
 
@@ -511,7 +511,7 @@ namespace vili
         if (is<object>())
         {
             auto& map = std::get<object>(m_data);
-            return reinterpret_cast<object::value_type*>(&map) + map.size();
+            return map.end();
         }
     }
 

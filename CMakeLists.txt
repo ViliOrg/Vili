@@ -4,7 +4,6 @@ project(vili)
 
 add_subdirectory(extlibs/fmt)
 add_subdirectory(extlibs/pegtl)
-add_subdirectory(extlibs/catch)
 
 set(VILI_HEADERS
     include/vili/config.hpp
@@ -57,5 +56,6 @@ endif()
 
 
 if (BUILD_TESTS)
+    add_subdirectory(extlibs/catch)
     add_subdirectory(tests)
 endif()

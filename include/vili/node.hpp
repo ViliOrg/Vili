@@ -13,11 +13,11 @@ namespace vili
     class node_iterator
     {
     private:
-        std::variant<array::value_type*, object::value_type*> m_ptr;
+        std::variant<array::value_type*, object::iterator> m_ptr;
 
     public:
         node_iterator(array::value_type* value);
-        node_iterator(object::value_type* value);
+        node_iterator(object::iterator value);
         node_iterator(const node_iterator& other_it);
         node_iterator& operator++();
         bool operator!=(const node_iterator& rhs) const;
