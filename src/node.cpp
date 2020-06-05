@@ -436,8 +436,8 @@ namespace vili
     {
         if (is<object>())
         {
-            auto& map = std::get<object>(m_data);
-            if (map.find(key) != map.end())
+            const vili::object& map = std::get<object>(m_data);
+            if (map.find(key) != map.cend())
             {
                 return true;
             }
