@@ -67,3 +67,12 @@ TEST_CASE("Unexpected symbols", "[vili.parser]")
             vili::parser::from_string("a: !"), vili::exceptions::parsing_error);
     }
 }
+
+TEST_CASE("Unexpected indentation", "[vili.parser]")
+{
+    SECTION("Unexpected indentation")
+    {
+        REQUIRE_THROWS_AS(vili::parser::from_string("a:\n    b:1\n        c:2\n    d:3"),
+            vili::exceptions::parsing_error);
+    }
+}

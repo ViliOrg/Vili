@@ -41,6 +41,7 @@ namespace vili
     using node_data
         = std::variant<std::monostate, object, array, integer, number, boolean, string>;
     /**
+     * \helper{Lib/Internal/Vili.lua}
      * \brief Base Class for every Node in the Tree
      */
     class node
@@ -51,6 +52,7 @@ namespace vili
         [[nodiscard]] std::string dump_object(bool root) const;
 
     public:
+        static node from_type(node_type type);
         /**
          * \brief Default constructor, node will have null type
          */
@@ -229,6 +231,9 @@ namespace vili
          */
         [[nodiscard]] object as_object() const;
 
+        /**
+         * \brief Access element at given key
+         */
         node& operator[](const char* key);
         node& operator[](const std::string& key);
         node& operator[](size_t index);
@@ -269,6 +274,11 @@ namespace vili
         const node& at(const std::string& key) const;
         const node& at(size_t index) const;
 
+        /**
+         * \nobind
+         * \brief Directly access underlying variant
+         * \return reference to the underlying variant
+         */
         node_data& data();
 
         [[nodiscard]] size_t size() const;
@@ -322,7 +332,7 @@ namespace vili
         if (is<object>())
         {
             auto& map = std::get<object>(m_data);
-            map.emplace(key, std::forward(value));
+            map.emplace(key, std::forward<value_type>(value));
         }
         else
         {
