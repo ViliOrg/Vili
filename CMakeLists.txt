@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.6)
 
 project(vili)
 
+add_subdirectory(extlibs/fifo_map)
 add_subdirectory(extlibs/fmt)
 add_subdirectory(extlibs/fifo_map)
 add_subdirectory(extlibs/pegtl)
