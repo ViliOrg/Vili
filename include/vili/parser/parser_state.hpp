@@ -29,10 +29,13 @@ namespace vili::parser
         int64_t m_indent_base = 4;
         int64_t m_indent_current = -1;
         std::unordered_map<std::string, node> m_templates;
+        vili::node* m_last_container = nullptr;
 
     public:
         node root;
         state();
+        state(const state& state);
+        state(state&& state);
         void set_indent(int64_t indent);
         void use_indent();
         void set_active_identifier(std::string&& identifier);
@@ -41,6 +44,9 @@ namespace vili::parser
         void close_block();
         void push(node&& data);
         void push_template();
+        void push_template(
+            const std::string& template_name, const vili::node& node_template);
+        void specialize_template();
         [[nodiscard]] node get_template(const std::string& template_name) const;
     };
 }

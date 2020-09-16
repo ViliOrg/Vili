@@ -125,8 +125,9 @@ namespace vili::exceptions
     class unknown_child_node : public exception<unknown_child_node>
     {
     public:
+        std::string key;
         unknown_child_node(std::string_view key, debug_info info)
-            : exception(info)
+            : exception(info), key(key)
         {
             this->error("Tried to access non-existent child node '{}'", key);
         }
@@ -196,6 +197,16 @@ namespace vili::exceptions
         {
             this->error("Error while parsing vili content '{}' (line {} column {})",
                 source, line, column);
+        }
+    };
+
+    class invalid_node_type : public exception<invalid_node_type>
+    {
+    public:
+        invalid_node_type(std::string_view node_type, debug_info info)
+            : exception(info)
+        {
+            this->error("'{}' is not a valid node_type");
         }
     };
 }

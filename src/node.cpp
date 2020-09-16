@@ -10,7 +10,7 @@ std::string indent(const std::string& text)
 
 namespace vili
 {
-    node_iterator::node_iterator(array::value_type* value)
+    node_iterator::node_iterator(array::iterator value)
         : m_ptr(value)
     {
     }
@@ -27,9 +27,9 @@ namespace vili
 
     node_iterator& node_iterator::operator++()
     {
-        if (std::holds_alternative<array::value_type*>(m_ptr))
+        if (std::holds_alternative<array::iterator>(m_ptr))
         {
-            ++std::get<array::value_type*>(m_ptr);
+            ++std::get<array::iterator>(m_ptr);
         }
         if (std::holds_alternative<object::iterator>(m_ptr))
         {
@@ -41,10 +41,10 @@ namespace vili
 
     bool node_iterator::operator!=(const node_iterator& rhs) const
     {
-        if (std::holds_alternative<array::value_type*>(m_ptr))
+        if (std::holds_alternative<array::iterator>(m_ptr))
         {
-            return std::get<array::value_type*>(m_ptr)
-                != std::get<array::value_type*>(rhs.m_ptr);
+            return std::get<array::iterator>(m_ptr)
+                != std::get<array::iterator>(rhs.m_ptr);
         }
         if (std::holds_alternative<object::iterator>(m_ptr))
         {
@@ -55,13 +55,68 @@ namespace vili
 
     node& node_iterator::operator*()
     {
-        if (std::holds_alternative<array::value_type*>(m_ptr))
+        if (std::holds_alternative<array::iterator>(m_ptr))
         {
-            return *std::get<array::value_type*>(m_ptr);
+            return *std::get<array::iterator>(m_ptr);
         }
         if (std::holds_alternative<object::iterator>(m_ptr))
         {
             return std::get<object::iterator>(m_ptr)->second;
+        }
+    }
+
+    const_node_iterator::const_node_iterator(array::const_iterator value)
+        : m_ptr(value)
+    {
+    }
+
+    const_node_iterator::const_node_iterator(object::const_iterator value)
+        : m_ptr(value)
+    {
+    }
+
+    const_node_iterator::const_node_iterator(const const_node_iterator& other_it)
+        : m_ptr(other_it.m_ptr)
+    {
+    }
+
+    const_node_iterator& const_node_iterator::operator++()
+    {
+        if (std::holds_alternative<array::const_iterator>(m_ptr))
+        {
+            ++std::get<array::const_iterator>(m_ptr);
+        }
+        if (std::holds_alternative<object::const_iterator>(m_ptr))
+        {
+            ++std::get<object::const_iterator>(m_ptr);
+        }
+
+        return *this;
+    }
+
+    bool const_node_iterator::operator!=(const const_node_iterator& rhs) const
+    {
+        if (std::holds_alternative<array::const_iterator>(m_ptr))
+        {
+            return std::get<array::const_iterator>(m_ptr)
+                != std::get<array::const_iterator>(rhs.m_ptr);
+        }
+        if (std::holds_alternative<object::const_iterator>(m_ptr))
+        {
+            return std::get<object::const_iterator>(m_ptr)
+                != std::get<object::const_iterator>(rhs.m_ptr);
+        }
+    }
+
+    const node& const_node_iterator::operator*()
+    {
+        if (std::holds_alternative<array::const_iterator>(m_ptr))
+        {
+            return *std::get<array::const_iterator>(m_ptr);
+        }
+        if (std::holds_alternative<object::const_iterator>(m_ptr))
+        {
+            return std::get<object::const_iterator>(m_ptr)->second;
         }
     }
 
@@ -102,6 +157,34 @@ namespace vili
         if (!root)
             dump_value += "}";
         return dump_value;
+    }
+
+    node node::from_type(node_type type)
+    {
+        if (type == node_type::integer)
+        {
+            return vili::integer {};
+        }
+        else if (type == node_type::number)
+        {
+            return vili::number {};
+        }
+        else if (type == node_type::boolean)
+        {
+            return vili::boolean {};
+        }
+        else if (type == node_type::string)
+        {
+            return vili::string {};
+        }
+        else if (type == node_type::array)
+        {
+           return vili::array {};
+        }
+        else if (type == node_type::object)
+        {
+           return vili::object {};
+        }
     }
 
     node::node(int value)
@@ -214,6 +297,71 @@ namespace vili
         if (m_data.index())
             return false;
         return true;
+    }
+
+    bool node::is_integer() const
+    {
+        return is<integer>();
+    }
+
+    bool node::is_number() const
+    {
+        return is<number>();
+    }
+
+    bool node::is_numeric() const
+    {
+        return is<integer>() || is<number>();
+    }
+
+    bool node::is_boolean() const
+    {
+        return is<boolean>();
+    }
+
+    bool node::is_string() const
+    {
+        return is<string>();
+    }
+
+    bool node::is_array() const
+    {
+        return is<array>();
+    }
+
+    bool node::is_object() const
+    {
+        return is<object>();
+    }
+
+    boolean node::as_boolean() const
+    {
+        return as<boolean>();
+    }
+
+    integer node::as_integer() const
+    {
+        return as<integer>();
+    }
+
+    number node::as_number() const
+    {
+        return as<number>();
+    }
+
+    string node::as_string() const
+    {
+        return as<string>();
+    }
+
+    array node::as_array() const
+    {
+        return as<array>();
+    }
+
+    object node::as_object() const
+    {
+        return as<object>();
     }
 
     node& node::operator[](const char* key)
@@ -360,7 +508,10 @@ namespace vili
         {
             for (auto [key, val] : value.items())
             {
-                (*this)[key] = val;
+                if (this->contains(key))
+                    this->at(key).merge(val);
+                else
+                    (*this)[key] = val;
             }
         }
         else if (is<array>() && value.is<array>())
@@ -381,8 +532,8 @@ namespace vili
     {
         if (is<object>())
         {
-            auto& map = std::get<object>(m_data);
-            if (map.find(key) != map.end())
+            const vili::object& map = std::get<object>(m_data);
+            if (map.find(key) != map.cend())
             {
                 return true;
             }
@@ -492,7 +643,7 @@ namespace vili
         if (is<array>())
         {
             auto& vector = std::get<array>(m_data);
-            return std::get<array>(m_data).data();
+            return std::get<array>(m_data).begin();
         }
         if (is<object>())
         {
@@ -506,7 +657,35 @@ namespace vili
         if (is<array>())
         {
             auto& vector = std::get<array>(m_data);
-            return vector.data() + vector.size();
+            return vector.end();
+        }
+        if (is<object>())
+        {
+            auto& map = std::get<object>(m_data);
+            return map.end();
+        }
+    }
+
+    const_node_iterator node::begin() const
+    {
+        if (is<array>())
+        {
+            auto& vector = std::get<array>(m_data);
+            return std::get<array>(m_data).begin();
+        }
+        if (is<object>())
+        {
+            auto& map = std::get<object>(m_data);
+            return map.begin();
+        }
+    }
+
+    const_node_iterator node::end() const
+    {
+        if (is<array>())
+        {
+            auto& vector = std::get<array>(m_data);
+            return vector.end();
         }
         if (is<object>())
         {

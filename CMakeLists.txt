@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.6)
 project(vili)
 
 add_subdirectory(extlibs/fmt)
+add_subdirectory(extlibs/fifo_map)
 add_subdirectory(extlibs/pegtl)
 
 set(VILI_HEADERS
@@ -13,6 +14,7 @@ set(VILI_HEADERS
     include/vili/utils.hpp
     include/vili/parser/actions.hpp
     include/vili/parser/grammar.hpp
+    include/vili/parser/grammar_errors.hpp
     include/vili/parser/parser_state.hpp
     include/vili/parser/parser.hpp
 )
@@ -26,16 +28,9 @@ set(VILI_SOURCES
 
 add_library(vili ${VILI_HEADERS} ${VILI_SOURCES})
 
+target_link_libraries(vili fifo_map)
 target_link_libraries(vili fmt)
 target_link_libraries(vili pegtl)
-
-set(VILI_KEEP_ORDER ON CACHE BOOL "Keep insertion order ?")
-
-if (VILI_KEEP_ORDER)
-    add_subdirectory(extlibs/tsl)
-    target_link_libraries(vili tsl)
-    target_compile_definitions(vili PRIVATE VILI_KEEP_ORDER)
-endif()
 
 target_include_directories(vili
     PUBLIC
@@ -53,7 +48,6 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_EXTENSIONS OFF)
 if (NOT DEFINED BUILD_TESTS)
     set(BUILD_TESTS OFF CACHE BOOL "Build Vili Tests ?")
 endif()
-
 
 if (BUILD_TESTS)
     add_subdirectory(extlibs/catch)

@@ -1,18 +1,16 @@
 #pragma once
 
+#include <sstream>
 #include <string>
 #include <vector>
 
-// #include <tsl/ordered_map.h>
-// #include <tsl/fifo_map.hpp>
-#include <sstream>
-//#include <unordered_map>
-#include <tsl/fifo_map.hpp>
+#include <nlohmann/fifo_map.hpp>
 
 namespace vili
 {
     constexpr std::string_view true_value = "true";
     constexpr std::string_view false_value = "false";
+    constexpr std::string_view null_type = "null";
     constexpr std::string_view bool_type = "boolean";
     constexpr std::string_view int_type = "integer";
     constexpr std::string_view float_type = "number";
@@ -24,10 +22,6 @@ namespace vili
 
     using null = void*;
 
-    //using object = std::unordered_map<std::string, node>;
-    /*using object = tsl::ordered_map<std::string, node, std::hash<std::string>,
-        std::equal_to<std::string>, std::allocator<std::pair<std::string, node>>,
-        std::vector<std::pair<std::string, node>>>;*/
     using object = nlohmann::fifo_map<std::string, node>;
     using array = std::vector<node>;
     using integer = long long int;
@@ -64,5 +58,4 @@ namespace vili
 
     node_type from_string(std::string_view type);
     std::string to_string(node_type type);
-    node_type from_value(std::string_view value);
 }
