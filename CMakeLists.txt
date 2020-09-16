@@ -4,7 +4,6 @@ project(vili)
 
 add_subdirectory(extlibs/fifo_map)
 add_subdirectory(extlibs/fmt)
-add_subdirectory(extlibs/fifo_map)
 add_subdirectory(extlibs/pegtl)
 
 set(VILI_HEADERS
