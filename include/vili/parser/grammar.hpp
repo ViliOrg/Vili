@@ -66,7 +66,7 @@ namespace vili::parser::rules
     struct object : peg::sor<brace_based_object, indent_based_object> {};
 
     // Comments
-    struct inline_comment : peg::seq<peg::one<'#'>, peg::until<peg::sor<peg::eol, peg::eof>, peg::any>> {};
+    struct inline_comment : peg::seq<peg::one<'#'>, peg::until<peg::eolf, peg::any>> {};
 
     // Templates
     struct template_keyword : peg::string<'t', 'e', 'm', 'p', 'l', 'a', 't', 'e'> {};
@@ -82,7 +82,7 @@ namespace vili::parser::rules
     struct node : peg::seq<affectation, peg::must<element>> {};
     struct full_node : peg::seq<indent, node, peg::opt<peg::eol>> {};
     struct empty_line : peg::seq<peg::star<peg::blank>, peg::eol> {};
-    struct line : peg::sor<empty_line, inline_comment, template_decl, full_node> {};
+    struct line : peg::seq<peg::sor<empty_line, inline_comment, template_decl, full_node>, peg::opt<peg::star<peg::blank>, inline_comment>> {};
     struct vili_grammar : peg::until<peg::eof, peg::must<line>> {};
     struct grammar : peg::must<vili_grammar> {};
     // clang-format on
