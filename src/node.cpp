@@ -239,7 +239,7 @@ namespace vili
 
     void node::operator=(const node& copy)
     {
-        m_data = copy.m_data;
+        m_data = std::move(copy.m_data);
     }
 
     node_type node::type() const
