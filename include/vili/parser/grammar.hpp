@@ -48,9 +48,13 @@ namespace vili::parser::rules
     struct inline_node : peg::seq<affectation, inline_element> {};
     struct element : peg::sor<data, array, object, template_usage> {};
 
+    // Comments
+    struct inline_comment : peg::pad<peg::seq<peg::one<'#'>, peg::until<peg::eolf>>, peg::blank> {};
+    struct multiline_comment : peg::pad<peg::seq<peg::string<'/', '*'>, peg::until<peg::sor<peg::string<'*', '/'>, peg::eof>, peg::sor<multiline_comment, peg::any>>>, peg::blank> {};
+
     // Arrays
     struct array_separator : peg::one<','> {};
-    struct array_elements : peg::list_must<inline_element, array_separator, peg::space> {};
+    struct array_elements : peg::list_must<inline_element, peg::seq<array_separator, peg::opt<peg::sor<inline_comment, multiline_comment>>>, peg::space> {};
     struct open_array : peg::one<'['> {};
     struct close_array : peg::one<']'> {};
     struct array : peg::seq<open_array, peg::pad_opt<array_elements, peg::space>, peg::must<close_array>> {};
@@ -64,10 +68,6 @@ namespace vili::parser::rules
     struct object_elements : peg::list_must<inline_node, object_separator, peg::space> {};
     struct brace_based_object : peg::seq<open_object, peg::pad_opt<object_elements, peg::space>, peg::must<close_object>> {};
     struct object : peg::sor<brace_based_object, indent_based_object> {};
-
-    // Comments
-    struct inline_comment : peg::pad<peg::seq<peg::one<'#'>, peg::until<peg::eolf>>, peg::blank> {};
-    struct multiline_comment : peg::pad<peg::seq<peg::string<'/', '*'>, peg::until<peg::sor<peg::string<'*', '/'>, peg::eof>>>, peg::blank> {};
 
     // Templates
     struct template_keyword : peg::string<'t', 'e', 'm', 'p', 'l', 'a', 't', 'e'> {};
