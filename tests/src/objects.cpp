@@ -148,7 +148,7 @@ TEST_CASE("Incorrect object")
         vili::exceptions::parsing_error);
     }
 
-    SECTION("Newline after opening bracket")
+    SECTION("Newline before opening bracket")
     {
         REQUIRE_THROWS_AS(vili::parser::from_string(
             "object: \n"
