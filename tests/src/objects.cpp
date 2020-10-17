@@ -35,7 +35,9 @@ TEST_CASE("Multiline object")
     SECTION("Comma separator")
     {
         vili::node root = vili::parser::from_string(
-            "object: { a: 15, b: [16, 17], c: \"18\"}");
+            "object: {\n"
+            "a: 15, b: [16, 17], c: \"18\"\n"
+            "}");
         REQUIRE(root["object"]["a"].as<vili::integer>() == 15);
         REQUIRE(root["object"]["b"].as<vili::array>() == vili::array{ 16, 17 });
         REQUIRE(root["object"]["c"].as<vili::string>() == "18");
