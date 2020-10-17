@@ -12,10 +12,26 @@ TEST_CASE("Inline object")
         REQUIRE(root["object"]["b"].as<vili::array>() == vili::array { 16, 17 });
         REQUIRE(root["object"]["c"].as<vili::string>() == "18");
     }
+
+    SECTION("Empty object")
+    {
+        vili::node root
+            = vili::parser::from_string("object: {}");
+        REQUIRE(root["object"].empty());
+    }
 }
 
 TEST_CASE("Multiline object")
 {
+    SECTION("Empty object")
+    {
+        vili::node root = vili::parser::from_string(
+            "object: {\n"
+            "   \n"
+            "  }");
+        REQUIRE(root["object"].empty());
+    }
+
     SECTION("Comma separator")
     {
         vili::node root = vili::parser::from_string(
