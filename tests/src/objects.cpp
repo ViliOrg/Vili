@@ -54,10 +54,12 @@ TEST_CASE("Multiline object")
     SECTION("Eol and spaces")
     {
         vili::node root = vili::parser::from_string(
-            "object: {\n"
-            "a: 15,\n"
-            "b: [16, 17]\n"
-            "c: \"18\"\n"
+            "object:     {  \n"
+            "    a: 15  \n"
+            "        ,    \n"
+            "b: [16, 17]  \n"
+            "\n"
+            "   c: \"18\"       \n"
             "}");
         REQUIRE(root["object"]["a"].as<vili::integer>() == 15);
         REQUIRE(root["object"]["b"].as<vili::array>() == vili::array{ 16, 17 });
@@ -86,7 +88,7 @@ TEST_CASE("Nested objects")
 
 TEST_CASE("Incorrect object")
 {
-    SECTION("Missing end bracket")
+    SECTION("Missing closing bracket")
     {
         REQUIRE_THROWS_AS(vili::parser::from_string(
             "object: {\n"
@@ -96,7 +98,7 @@ TEST_CASE("Incorrect object")
         vili::exceptions::parsing_error);
     }
 
-    SECTION("Missing start bracket")
+    SECTION("Missing opening bracket")
     {
         REQUIRE_THROWS_AS(vili::parser::from_string(
             "object: \n"
@@ -122,6 +124,17 @@ TEST_CASE("Incorrect object")
     {
         REQUIRE_THROWS_AS(vili::parser::from_string(
             "object: {\n"
+            "a: 15,\n"
+            "b: [16, 17] c: \"18\",\n"
+            "}"),
+        vili::exceptions::parsing_error);
+    }
+
+    SECTION("Newline after opening bracket")
+    {
+        REQUIRE_THROWS_AS(vili::parser::from_string(
+            "object: \n"
+            "{\n"
             "a: 15,\n"
             "b: [16, 17] c: \"18\",\n"
             "}"),
