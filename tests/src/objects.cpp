@@ -43,41 +43,27 @@ TEST_CASE("Multiline object")
         REQUIRE(root["object"]["c"].as<vili::string>() == "18");
     }
 
-    SECTION("Newline separator")
+    SECTION("Indent based")
     {
         vili::node root = vili::parser::from_string(
-            "object: {\n"
-            "a: 15\n"
-            "b: [16, 17]\n"
-            "c: \"18\"\n"
-            "}");
+            "object:\n"
+            "   a: 15\n"
+            "   b: [16, 17]\n"
+            "   c: \"18\"\n");
         REQUIRE(root["object"]["a"].as<vili::integer>() == 15);
         REQUIRE(root["object"]["b"].as<vili::array>() == vili::array{ 16, 17 });
         REQUIRE(root["object"]["c"].as<vili::string>() == "18");
     }
 
-    SECTION("Mixed separator")
-    {
-        vili::node root = vili::parser::from_string(
-            "object: {\n"
-            "a: 15,\n"
-            "b: [16, 17]\n"
-            "c: \"18\"\n"
-            "}");
-        REQUIRE(root["object"]["a"].as<vili::integer>() == 15);
-        REQUIRE(root["object"]["b"].as<vili::array>() == vili::array{ 16, 17 });
-        REQUIRE(root["object"]["c"].as<vili::string>() == "18");
-    }
-
-    SECTION("Eol and spaces")
+    SECTION("Comma with EOL and spaces")
     {
         vili::node root = vili::parser::from_string(
             "object:     {  \n"
             "    a: 15  \n"
-            "        ,    \n"
+            "      ,      \n"
             "b: [16, 17]  \n"
             "\n"
-            "   c: \"18\"       \n"
+            " ,  c: \"18\"       \n"
             "}");
         REQUIRE(root["object"]["a"].as<vili::integer>() == 15);
         REQUIRE(root["object"]["b"].as<vili::array>() == vili::array{ 16, 17 });
@@ -88,7 +74,7 @@ TEST_CASE("Multiline object")
 
 TEST_CASE("Nested objects")
 {
-    SECTION("One object inside object")
+    SECTION("Brace based object inside brace based object")
     {
         vili::node root = vili::parser::from_string(
             "object: {\n"
@@ -97,6 +83,36 @@ TEST_CASE("Nested objects")
             "a: 16, b: 17},\n"
             "c: \"18\"\n"
             "}");
+        REQUIRE(root["object"]["a"].as<vili::integer>() == 15);
+        REQUIRE(root["object"]["b"]["a"].as<vili::integer>() == 16);
+        REQUIRE(root["object"]["b"]["b"].as<vili::integer>() == 17);
+        REQUIRE(root["object"]["c"].as<vili::string>() == "18");
+    }
+
+    SECTION("Brace based object inside indent based object")
+    {
+        vili::node root = vili::parser::from_string(
+            "object:\n"
+            "   a: 15\n"
+            "   b: {\n"
+            "       a: 16,\n"
+            "   b: 17}\n"
+            "   c: \"18\"\n");
+        REQUIRE(root["object"]["a"].as<vili::integer>() == 15);
+        REQUIRE(root["object"]["b"]["a"].as<vili::integer>() == 16);
+        REQUIRE(root["object"]["b"]["b"].as<vili::integer>() == 17);
+        REQUIRE(root["object"]["c"].as<vili::string>() == "18");
+    }
+
+    SECTION("Indent based object inside indent based object")
+    {
+        vili::node root = vili::parser::from_string(
+            "object:\n"
+            "   a: 15\n"
+            "   b:\n"
+            "      a: 16\n"
+            "      b: 17\n"
+            "   c: \"18\"\n");
         REQUIRE(root["object"]["a"].as<vili::integer>() == 15);
         REQUIRE(root["object"]["b"]["a"].as<vili::integer>() == 16);
         REQUIRE(root["object"]["b"]["b"].as<vili::integer>() == 17);
@@ -148,6 +164,17 @@ TEST_CASE("Incorrect object")
         vili::exceptions::parsing_error);
     }
 
+    SECTION("No comma")
+    {
+        REQUIRE_THROWS_AS(vili::parser::from_string(
+            "object: {\n"
+            "a: 15\n"
+            "b: [16, 17]\n"
+            "c: \"18\"\n"
+            "}"),
+        vili::exceptions::parsing_error);
+    }
+
     SECTION("Newline before opening bracket")
     {
         REQUIRE_THROWS_AS(vili::parser::from_string(
@@ -156,6 +183,27 @@ TEST_CASE("Incorrect object")
             "a: 15,\n"
             "b: [16, 17] c: \"18\",\n"
             "}"),
+        vili::exceptions::parsing_error);
+    }
+
+    SECTION("Mixed separator")
+    {
+        REQUIRE_THROWS_AS(vili::parser::from_string(
+            "object: {\n"
+            "a: 15,\n"
+            "b: [16, 17]\n"
+            "c: \"18\"\n"
+            "}"),
+        vili::exceptions::parsing_error);
+    }
+
+    SECTION("Wrong indent")
+    {
+        REQUIRE_THROWS_AS(vili::parser::from_string(
+            "object:\n"
+            "   a: 15\n"
+            "    b: [16, 17]\n"
+            "   c: \"18\"\n"),
         vili::exceptions::parsing_error);
     }
 }
