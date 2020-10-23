@@ -239,7 +239,7 @@ namespace vili
 
     void node::operator=(const node& copy)
     {
-        m_data = std::move(copy.m_data);
+        m_data = copy.m_data;
     }
 
     node_type node::type() const
@@ -510,11 +510,7 @@ namespace vili
 
     void node::merge(node& value)
     {
-        if (is_primitive() && value.is_primitive())
-        {
-            m_data = value.m_data;
-        }
-        else if (is<object>() && value.is<object>())
+        if (is<object>() && value.is<object>())
         {
             for (auto [key, val] : value.items())
             {
@@ -533,8 +529,7 @@ namespace vili
         }
         else
         {
-            throw exceptions::invalid_merge(
-                to_string(type()), to_string(value.type()), VILI_EXC_INFO);
+            m_data = value.m_data;
         }
     }
 

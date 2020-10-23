@@ -68,11 +68,15 @@ TEST_CASE("Unexpected symbols", "[vili.parser]")
     }
 }
 
-TEST_CASE("Unexpected indentation", "[vili.parser]")
+TEST_CASE("Indentation", "[vili.parser]")
 {
     SECTION("Unexpected indentation")
     {
         REQUIRE_THROWS_AS(vili::parser::from_string("a:\n    b:1\n        c:2\n    d:3"),
             vili::exceptions::parsing_error);
+    }
+    SECTION("Single space indentation")
+    {
+        REQUIRE_NOTHROW(vili::parser::from_string("a:\n b:1\n c:2\n d:3"));
     }
 }
