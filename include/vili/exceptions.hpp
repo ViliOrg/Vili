@@ -216,4 +216,14 @@ namespace vili::exceptions
             this->error("'{}' is not a valid node_type");
         }
     };
+
+    class file_not_found : public exception<file_not_found>
+    {
+    public:
+        file_not_found(std::string_view path, debug_info info)
+            : exception("file_not_found", info)
+        {
+            this->error("Could not open file located at '{}'", path);
+        }
+    };
 }
