@@ -49,24 +49,30 @@ namespace vili::parser::rules
     struct element : peg::sor<data, array, object, template_usage> {};
 
     // Comments
-    struct inline_comment : peg::pad<peg::seq<peg::one<'#'>, peg::until<peg::eolf>>, peg::blank> {};
+    struct inline_comment : peg::seq<peg::star<peg::blank>, peg::one<'#'>, peg::until<peg::eolf>> {};
+    struct inline_comment_eol : peg::seq<peg::star<peg::blank>, peg::one<'#'>, peg::until<peg::eol>> {};
     struct multiline_comment : peg::pad<peg::seq<peg::string<'/', '*'>, peg::until<peg::sor<peg::string<'*', '/'>, peg::eof>, peg::sor<multiline_comment, peg::any>>>, peg::blank> {};
+    struct comment : peg::sor<inline_comment, multiline_comment> {};
+
+    // Ignore block
+    struct ignore : peg::sor<comment, peg::space> {};
+    struct endline : peg::sor<inline_comment_eol, peg::eol> {};
 
     // Arrays
     struct array_separator : peg::one<','> {};
-    struct array_elements : peg::list_must<inline_element, peg::seq<array_separator, peg::opt<peg::sor<inline_comment, multiline_comment>>>, peg::space> {};
+    struct array_elements : peg::list_must<inline_element, peg::seq<array_separator, peg::opt<comment>>, peg::space> {};
     struct open_array : peg::one<'['> {};
     struct close_array : peg::one<']'> {};
-    struct array : peg::seq<open_array, peg::pad_opt<array_elements, peg::space>, peg::must<close_array>> {};
+    struct array : peg::seq<open_array, peg::pad_opt<array_elements, ignore>, peg::must<close_array>> {};
 
     // Objects
     struct node;
-    struct indent_based_object : peg::eol {};
+    struct indent_based_object : endline {};
     struct open_object : peg::one<'{'> {};
     struct close_object : peg::one<'}'> {};
     struct object_separator : peg::one<','> {};
-    struct object_elements : peg::list_must<inline_node, object_separator, peg::space> {};
-    struct brace_based_object : peg::seq<open_object, peg::pad_opt<object_elements, peg::space>, peg::must<close_object>> {};
+    struct object_elements : peg::list_must<inline_node, object_separator, ignore> {};
+    struct brace_based_object : peg::seq<open_object, peg::pad_opt<object_elements, ignore>, peg::must<close_object>> {};
     struct object : peg::sor<brace_based_object, indent_based_object> {};
 
     // Templates
@@ -81,9 +87,9 @@ namespace vili::parser::rules
 
     // Nodes
     struct node : peg::seq<affectation, peg::must<element>> {};
-    struct full_node : peg::seq<indent, node, peg::opt<peg::eol>> {};
+    struct full_node : peg::seq<indent, node, peg::opt<endline>> {};
     struct empty_line : peg::seq<peg::star<peg::blank>, peg::eol> {};
-    struct block : peg::sor<empty_line, inline_comment, template_decl, full_node, multiline_comment> {};
+    struct block : peg::sor<empty_line, comment, template_decl, full_node> {};
     struct vili_grammar : peg::until<peg::eof, peg::must<block>> {};
     struct grammar : peg::must<vili_grammar> {};
     // clang-format on
