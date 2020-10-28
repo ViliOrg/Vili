@@ -53,8 +53,6 @@ namespace vili::parser::rules
     struct inline_comment_eol : peg::seq<peg::star<peg::blank>, peg::one<'#'>, peg::until<peg::eol>> {};
     struct multiline_comment : peg::seq<peg::string<'/', '*'>, peg::until<peg::sor<peg::string<'*', '/'>, peg::eof>, peg::sor<multiline_comment, peg::any>>> {};
     struct comment : peg::sor<inline_comment, multiline_comment> {};
-
-    // Ignore block
     struct space_or_comment : peg::sor<comment, peg::space> {};
     struct endline : peg::sor<inline_comment_eol, peg::eol> {};
     struct multiline_comment_block : peg::seq<peg::plus<peg::pad<multiline_comment, peg::blank>>, peg::sor<endline, peg::eolf>> {};
