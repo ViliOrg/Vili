@@ -98,12 +98,25 @@ TEST_CASE("Multiline comment")
 
         REQUIRE_NOTHROW(vili::parser::from_string("  /* This is a\nmultiline\ncomment */  "));
 
-        REQUIRE_NOTHROW(vili::parser::from_string("  /* This is an\nunclosed\ncomment"));
-
         REQUIRE_NOTHROW(
             vili::parser::from_string("  /*This is\n"
             "a /* nested */ multiline\n"
             "comment*/  "));
+    }
+
+    SECTION("Incorrect comment")
+    { 
+        REQUIRE_THROWS_AS(vili::parser::from_string("  /* This is an\nunclosed\ncomment") 
+            ,vili::exceptions::parsing_error);
+
+        REQUIRE_THROWS_AS(vili::parser::from_string("   This is an\nunclosed\ncomment */"),
+            vili::exceptions::parsing_error);
+
+        REQUIRE_THROWS_AS(vili::parser::from_string(
+            "test:\n"
+            "   int1: 42\n"
+            "  /* comment */ int2: 43\n"),
+            vili::exceptions::parsing_error);
     }
 
     SECTION("Comment with code")
