@@ -14,6 +14,13 @@ TEST_CASE("Inline comment", "[vili.parser]")
         REQUIRE_NOTHROW(vili::parser::from_string("         # This is a comment with spaces and indents     "));
     }
 
+    SECTION("Incorrect comment")
+    {
+        REQUIRE_THROWS_AS(
+            vili::parser::from_string("a: [\" hello \", # quoted comment \" in unclosed array \"]"),
+            vili::exceptions::parsing_error);
+    }
+
     SECTION("Comment with code")
     {
         SECTION("Comment with one-lined affectation")
