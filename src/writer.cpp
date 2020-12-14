@@ -1,5 +1,7 @@
 #include <array>
+#ifdef __cpp_lib_to_chars
 #include <charconv>
+#endif
 #include <string>
 #include <string_view>
 
