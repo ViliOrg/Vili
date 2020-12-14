@@ -387,7 +387,8 @@ namespace vili
         }
         else
         {
-            throw exceptions::invalid_cast(array_type, to_string(type()), VILI_EXC_INFO);
+            throw exceptions::invalid_cast(
+                array_typename, to_string(type()), VILI_EXC_INFO);
         }
     }
 
@@ -401,7 +402,8 @@ namespace vili
         }
         else
         {
-            throw exceptions::invalid_cast(object_type, to_string(type()), VILI_EXC_INFO);
+            throw exceptions::invalid_cast(
+                object_typename, to_string(type()), VILI_EXC_INFO);
         }
     }
 

@@ -1,7 +1,7 @@
 #include <catch/catch.hpp>
 #include <fmt/format.h>
 
-#include <vili/parser/parser.hpp>
+#include <vili/parser.hpp>
 #include <vili/parser/parser_state.hpp>
 
 TEST_CASE("Templates in root")
@@ -41,7 +41,7 @@ TEST_CASE("Templates in list")
         parser_state.push_template(
             "add", vili::object { { "command", "add" }, { "amount", 1 } });
         parser_state.push_template(
-            "multiply", vili::object { { "command", "multiply" }, { "amount", 1 } });
+            "multiply", vili::object { { "command", "multiply" }, { "amount", 2 } });
         parser_state.push_template(
             "format", vili::object { { "command", "format" }, { "output", "{}" } });
         vili::node root = vili::parser::from_string("code: ["
@@ -49,9 +49,8 @@ TEST_CASE("Templates in list")
                                                     "multiply {amount: 3},"
                                                     "add {amount: 2},"
                                                     "multiply,"
-                                                    "multiply {amount: 2},"
                                                     "add,"
-                                                    "multiply {amount: 2},"
+                                                    "multiply,"
                                                     "format {output: \"Number: {}\"}"
                                                     "]",
             parser_state);

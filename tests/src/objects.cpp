@@ -1,6 +1,6 @@
 #include <catch/catch.hpp>
 
-#include <vili/parser/parser.hpp>
+#include <vili/parser.hpp>
 
 TEST_CASE("Inline object")
 {
