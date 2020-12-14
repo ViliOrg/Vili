@@ -275,7 +275,12 @@ namespace vili::writer
                 current_line += key;
                 current_line += std::string(options.object.affectation_left_spaces, ' ');
                 current_line += ":";
-                current_line += std::string(options.object.affectation_right_spaces, ' ');
+                // Don't put a space in case we dump an indent-based object (avoid trailing spaces)
+                if (!(value.is_object() && options.object.style == object_style::indent))
+                {
+                    current_line
+                        += std::string(options.object.affectation_right_spaces, ' ');
+                } 
                 current_line += indent(values_dumps[key], options.indent, false);
             }
             if (iteration_index != object_size - 1)

@@ -150,9 +150,19 @@ TEST_CASE("Object dumps")
     SECTION("Multilevel object dump")
     {
         vili::writer::dump_options options;
-        // REQUIRE(vili::writer::dump(family_advanced, options) == "lol");
-        options.object.style = vili::writer::object_style::braces;
-        options.object.items_per_line = 1;
-        REQUIRE(vili::writer::dump(family_advanced, options) == "lol");
+        std::string_view expected_result = "Bob:\n"
+                                           "    age: 20\n"
+                                           "    weight: 68\n"
+                                           "    height: 170\n"
+                                           "Jack:\n"
+                                           "    age: 30\n"
+                                           "    weight: 55\n"
+                                           "    height: 160\n"
+                                           "Hughes:\n"
+                                           "    age: 55\n"
+                                           "    weight: 95\n"
+                                           "    height: 190";
+        std::string dump_result = vili::writer::dump(family_advanced, options);
+        REQUIRE(dump_result == expected_result);
     }
 }
