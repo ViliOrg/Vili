@@ -5,6 +5,9 @@
 
 #include <vili/writer.hpp>
 
+
+
+
 namespace vili::writer
 {
     std::string indent(const std::string& text, unsigned int indentation_level,
@@ -15,6 +18,7 @@ namespace vili::writer
                 text, "\n", "\n" + std::string(indentation_level, ' '));
     }
 
+#ifdef __cpp_lib_to_chars
     std::string dump_integer(const vili::node& data)
     {
         if (!data.is<vili::integer>())
@@ -59,6 +63,31 @@ namespace vili::writer
         }
         throw exceptions::integer_dump_error(number_value, VILI_EXC_INFO);
     }
+#else
+    std::string dump_integer(const vili::node& data)
+    {
+        if (!data.is<vili::integer>())
+        {
+            throw exceptions::invalid_cast(
+                vili::integer_typename, vili::to_string(data.type()), VILI_EXC_INFO);
+        }
+
+        const vili::integer integer_value = data.as<vili::integer>();
+        return std::to_string(integer_value);
+    }
+
+    std::string dump_number(const vili::node& data)
+    {
+        if (!data.is<vili::number>())
+        {
+            throw exceptions::invalid_cast(
+                vili::number_typename, vili::to_string(data.type()), VILI_EXC_INFO);
+        }
+
+        const vili::number number_value = data.as<vili::number>();
+        return std::to_string(number_value);
+    }
+#endif
 
     std::string dump_boolean(const vili::node& data)
     {
