@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <variant>
 
 #include <vili/exceptions.hpp>
@@ -42,7 +43,6 @@ namespace vili
     using node_data
         = std::variant<std::monostate, object, array, integer, number, boolean, string>;
     /**
-     * \helper{Lib/Internal/Vili.lua}
      * \brief Base Class for every Node in the Tree
      */
     class node
@@ -74,6 +74,10 @@ namespace vili
          * \brief Creates a node that contains a string
          */
         node(const string& value);
+        /**
+         * \brief Creates a node that contains a string
+         */
+        node(std::string_view value);
         /**
          * \brief Creates a node that contains a boolean
          */
@@ -114,14 +118,12 @@ namespace vili
         [[nodiscard]] std::string dump(bool root = false) const;
 
         /**
-         * \nobind
          * \brief Checks if the node contains a given type
          * \tparam type node_type enum value to test against the type of the underlying value of the node
          * \return true if the type is the same, false otherwise
          */
         template <node_type type> [[nodiscard]] constexpr bool is() const;
         /**
-         * \nobind
          * \brief Checks if the node contains a given type
          * \tparam T type to test against the type of the underlying value of the node
          * \return true if the type is the same, false otherwise
@@ -179,7 +181,6 @@ namespace vili
         [[nodiscard]] bool is_object() const;
 
         /**
-         * \nobind
          * \brief Returns the node as the underlying type
          * \tparam T type you want to cast the node to
          * \throw invalid_cast exception when the type of the underlying value is not the same as T
@@ -187,7 +188,6 @@ namespace vili
          */
         template <class T> T& as();
         /**
-         * \nobind
          * \brief Returns the node as the underlying type
          * \tparam T type you want to cast the node to
          * \throw invalid_cast exception when the type of the underlying value is not the same as T
@@ -197,7 +197,6 @@ namespace vili
         [[nodiscard]] std::enable_if_t<!std::is_floating_point_v<T> || !vili::PERMISSIVE_CAST, const T&> as() const;
         template <class T>
         /**
-         * \nobind
          * \brief Returns the node as the underlying type
          *        This overload is only used when vili has to convert an integer to a floating point number
          *        and therefore can't return a const reference from the internal variant
@@ -283,12 +282,18 @@ namespace vili
 
         void push(const node& value);
         /**
-         * \nobind
+         * \brief Emplace a child node at given index
+         * \tparam value_type Any type castable to a vili::node
+         * \param index Index of the node to emplace
+         * \param value Value of the node to emplace
          */
         template <class value_type>
         void emplace(size_t index, value_type&& value);
         /**
-         * \nobind
+         * \brief Emplace a child node at given key
+         * \tparam value_type Any type castable to a vili::node
+         * \param key Key of the node to emplace
+         * \param value Value of the node to emplace
          */
         template <class value_type>
         void emplace(const std::string& key, value_type&& value);
@@ -319,7 +324,6 @@ namespace vili
         [[nodiscard]] const node& at(size_t index) const;
 
         /**
-         * \nobind
          * \brief Directly access underlying variant
          * \return reference to the underlying variant
          */
