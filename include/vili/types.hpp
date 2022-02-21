@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include <nlohmann/fifo_map.hpp>

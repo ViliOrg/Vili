@@ -1,8 +1,12 @@
+#include <fstream>
+
 #include <catch/catch.hpp>
 #include <fmt/format.h>
 
 #include <vili/node.hpp>
+#include <vili/parser.hpp>
 #include <vili/writer.hpp>
+
 
 TEST_CASE("Primitives dumps")
 {
@@ -61,7 +65,7 @@ TEST_CASE("Array dumps")
     SECTION("Single element per line")
     {
         vili::writer::dump_options options;
-        options.array.items_per_line = 1;
+        options.array.items_per_line.any = 1;
         REQUIRE(vili::writer::dump(names, options)
             == "[\n    \"Bob\",\n    \"Carl\",\n    \"Jack\"\n]");
         options.indent = 1;
@@ -106,7 +110,7 @@ TEST_CASE("Array dumps")
         options.array.ends_with_newline = vili::writer::delimiter_newline_policy::always;
         REQUIRE(vili::writer::dump(names, options)
             == "[\n    \"Bob\", \"Carl\", \"Jack\"\n]");
-        options.array.items_per_line = 1;
+        options.array.items_per_line.any = 1;
         options.array.starts_with_newline = vili::writer::delimiter_newline_policy::never;
         options.array.ends_with_newline = vili::writer::delimiter_newline_policy::never;
         REQUIRE(vili::writer::dump(names, options)
