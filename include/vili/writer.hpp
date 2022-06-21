@@ -19,7 +19,6 @@ namespace vili::writer
         braces,
         indent
     };
-
     struct dump_options
     {
         struct items_per_line
@@ -31,7 +30,7 @@ namespace vili::writer
         };
 
         unsigned int indent = 4;
-        struct array
+        struct _array
         {
             items_per_line items_per_line;
             unsigned int max_line_length = 0;
@@ -44,11 +43,11 @@ namespace vili::writer
             unsigned int inline_spacing = 1;
             comma_spacing_policy comma_spacing = comma_spacing_policy::right_side;
         };
-        array array;
+        _array array;
 
-        struct object
+        struct _object
         {
-            items_per_line items_per_line {1, 1, 1, 1};
+            items_per_line items_per_line { 1, 1, 1, 1 };
             unsigned int max_line_length = 0;
             delimiter_newline_policy starts_with_newline
                 = delimiter_newline_policy::only_if_multiline;
@@ -62,7 +61,7 @@ namespace vili::writer
             comma_spacing_policy comma_spacing = comma_spacing_policy::right_side;
             object_style style = object_style::indent;
         };
-        object object;
+        _object object;
 
         bool root = true;
     };

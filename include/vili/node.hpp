@@ -128,7 +128,7 @@ namespace vili
          * \tparam T type to test against the type of the underlying value of the node
          * \return true if the type is the same, false otherwise
          */
-        template <class T>[[nodiscard]] constexpr bool is() const;
+        template <class T> [[nodiscard]] constexpr bool is() const;
         /**
          * \brief Checks whether the underlying value is a primitive (boolean, integer, number, string) or not
          * \return true if the type of the node is a primitive, false otherwise
@@ -194,7 +194,9 @@ namespace vili
          * \return const reference to the value of the node (of type T)
          */
         template <class T>
-        [[nodiscard]] std::enable_if_t<!std::is_floating_point_v<T> || !vili::PERMISSIVE_CAST, const T&> as() const;
+        [[nodiscard]] std::enable_if_t<
+            !std::is_floating_point_v<T> || !vili::PERMISSIVE_CAST, const T&>
+        as() const;
         template <class T>
         /**
          * \brief Returns the node as the underlying type
@@ -204,7 +206,9 @@ namespace vili
          * \throw invalid_cast exception when the type of the underlying value is not the same as T
          * \return value of the node (of type T)
          */
-        [[nodiscard]] std::enable_if_t<std::is_floating_point_v<T> && vili::PERMISSIVE_CAST, T> as() const;
+        [[nodiscard]] std::enable_if_t<
+            std::is_floating_point_v<T> && vili::PERMISSIVE_CAST, T>
+        as() const;
 
         /**
          * \brief Returns the node as a boolean
@@ -287,8 +291,7 @@ namespace vili
          * \param index Index of the node to emplace
          * \param value Value of the node to emplace
          */
-        template <class value_type>
-        void emplace(size_t index, value_type&& value);
+        template <class value_type> void emplace(size_t index, value_type&& value);
         /**
          * \brief Emplace a child node at given key
          * \tparam value_type Any type castable to a vili::node
@@ -335,7 +338,7 @@ namespace vili
         void clear();
 
         operator std::string_view() const;
-        operator const std::string &() const;
+        operator const std::string&() const;
         operator integer() const;
         operator int() const;
         operator number() const;
@@ -357,16 +360,22 @@ namespace vili
     }
 
     template <class T>
-    [[nodiscard]] std::enable_if_t<!std::is_floating_point_v<T> || !vili::PERMISSIVE_CAST, const T &> node::as() const
+    [[nodiscard]] std::enable_if_t<!std::is_floating_point_v<T> || !vili::PERMISSIVE_CAST,
+        const T&>
+    node::as() const
     {
         if (is<T>())
             return std::get<T>(m_data);
 
-        throw exceptions::invalid_cast(typeid(T).name(), to_string(type()), VILI_EXC_INFO);
+        throw exceptions::invalid_cast(
+            typeid(T).name(), to_string(type()), VILI_EXC_INFO);
     }
 
     template <class T>
-    [[nodiscard]] std::enable_if_t<std::is_floating_point_v<T> && vili::PERMISSIVE_CAST, T> node::as() const {
+    [[nodiscard]] std::enable_if_t<std::is_floating_point_v<T> && vili::PERMISSIVE_CAST,
+        T>
+    node::as() const
+    {
         if (is<T>())
             return std::get<T>(m_data);
 

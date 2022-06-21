@@ -2,7 +2,6 @@
 
 #include <sstream>
 #include <string>
-#include <type_traits>
 #include <vector>
 
 #include <nlohmann/fifo_map.hpp>
@@ -18,6 +17,8 @@ namespace vili
     constexpr std::string_view string_typename = "string";
     constexpr std::string_view object_typename = "object";
     constexpr std::string_view array_typename = "array";
+    constexpr std::string_view unknown_typename = "unknown";
+    constexpr std::string_view container_typename = "array | object";
 
     class node;
 

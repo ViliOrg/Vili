@@ -60,7 +60,7 @@ namespace vili::writer
             }
             return utils::string::truncate_float(number_as_string);
         }
-        throw exceptions::integer_dump_error(number_value, VILI_EXC_INFO);
+        throw exceptions::number_dump_error(number_value, VILI_EXC_INFO);
     }
 #else
     std::string dump_integer(const vili::node& data)
@@ -108,16 +108,35 @@ namespace vili::writer
         return utils::string::quote(data.as<string>());
     }
 
+    /**
+     * \return true if items amount has been exceeded
+     */
     inline bool check_max_items_per_line(
         unsigned int max_items_per_line, unsigned int items_count)
     {
-        return (!max_items_per_line
+        return !(!max_items_per_line
             || (max_items_per_line && items_count <= max_items_per_line));
     }
 
-    inline bool check_max_line_length_exceeded(unsigned int max_line_length, unsigned line_length)
+    /**
+     * \return true if line length has been exceeded
+     */
+    inline bool check_max_line_length(size_t max_line_length, size_t line_length)
     {
         return !(!max_line_length || (max_line_length && line_length <= max_line_length));
+    }
+
+    inline unsigned int comma_spacing_policy_space_multiplier(comma_spacing_policy policy)
+    {
+        switch (policy)
+        {
+        case comma_spacing_policy::both:
+            return 2;
+        case comma_spacing_policy::left_side:
+        case comma_spacing_policy::right_side:
+        default:
+            return 1;
+        }
     }
 
     inline bool should_insert_newline_next_to_delimiter(
@@ -152,7 +171,8 @@ namespace vili::writer
 
         std::vector<dumped_item> values_dumps;
         values_dumps.reserve(data.size());
-        unsigned int total_content_length = 0;
+        unsigned int total_content_length = (
+            options.array.left_bracket_spacing + options.array.right_bracket_spacing);
 
         // Counters to check whether we exceed the items per line limit
         unsigned int primitive_items_counter = 0;
@@ -165,6 +185,9 @@ namespace vili::writer
             array_item_options.object.style = object_style::braces;
             const std::string item_dump = dump(item, array_item_options);
             total_content_length += item_dump.size();
+            // Spacing (*2 if space on both sides of comma) + comma
+            total_content_length
+                += (comma_spacing_policy_space_multiplier(options.array.comma_spacing) * options.array.inline_spacing) + 1;
             values_dumps.push_back(dumped_item { item_dump, item.type() });
             if (item.is_primitive())
             {
@@ -180,21 +203,21 @@ namespace vili::writer
             }
         }
         // We check item limits for each type (primitives, arrays, objects)
-        bool max_primitives_per_line_exceeded = check_max_line_length_exceeded(
+        bool max_primitives_per_line_exceeded = check_max_items_per_line(
             options.array.items_per_line.primitives, primitive_items_counter);
-        bool max_arrays_per_line_exceeded = check_max_line_length_exceeded(
+        bool max_arrays_per_line_exceeded = check_max_items_per_line(
             options.array.items_per_line.arrays, array_items_counter);
-        bool max_objects_per_line_exceeded = check_max_line_length_exceeded(
+        bool max_objects_per_line_exceeded = check_max_items_per_line(
             options.array.items_per_line.objects, object_items_counter);
         // But also for any type
-        bool max_items_per_line_exceeded = check_max_line_length_exceeded(
+        bool max_items_per_line_exceeded = check_max_items_per_line(
             options.array.items_per_line.any, values_dumps.size());
         // We check if any of the limit has been exceeded
         const bool max_items_per_line_constraint_exceeded
             = (max_primitives_per_line_exceeded || max_arrays_per_line_exceeded
                 || max_objects_per_line_exceeded || max_items_per_line_exceeded);
 
-        bool max_line_length_exceeded = check_max_line_length_exceeded(
+        bool max_line_length_exceeded = check_max_line_length(
             options.array.max_line_length, total_content_length);
 
         const bool fits_on_single_line
@@ -246,16 +269,13 @@ namespace vili::writer
                     = (options.array.items_per_line.primitives
                         && primitive_items_counter
                             >= options.array.items_per_line.primitives);
-                max_arrays_per_line_exceeded
-                    = (options.array.items_per_line.arrays
-                        && array_items_counter
-                            >= options.array.items_per_line.arrays);
-                max_objects_per_line_exceeded
-                    = (options.array.items_per_line.objects
-                        && object_items_counter
-                            >= options.array.items_per_line.objects);
+                max_arrays_per_line_exceeded = (options.array.items_per_line.arrays
+                    && array_items_counter >= options.array.items_per_line.arrays);
+                max_objects_per_line_exceeded = (options.array.items_per_line.objects
+                    && object_items_counter >= options.array.items_per_line.objects);
 
-                max_items_per_line_exceeded = (options.array.items_per_line.any
+                max_items_per_line_exceeded
+                    = (options.array.items_per_line.any
                           && items_per_line >= options.array.items_per_line.any)
                     || (max_primitives_per_line_exceeded || max_arrays_per_line_exceeded
                         || max_objects_per_line_exceeded);
@@ -337,21 +357,31 @@ namespace vili::writer
         std::unordered_map<std::string, std::string> values_dumps;
         values_dumps.reserve(data.size());
         unsigned int total_content_length = 0;
-        const unsigned int base_required_space = 2
+        // Colon + left spaces + right spaces
+        const unsigned int base_required_space = 1
             + options.object.affectation_left_spaces
             + options.object.affectation_right_spaces;
         for (const auto& [key, value] : data.items())
         {
             const std::string item_dump = dump(value, new_options);
             total_content_length += base_required_space + key.size() + item_dump.size();
+            // Whenever we use braces, length will be increased because of the commas and spaces around it
+            if (options.object.style == object_style::braces)
+            {
+                total_content_length += (comma_spacing_policy_space_multiplier(
+                                             options.object.comma_spacing)
+                                            * options.object.inline_spacing)
+                    + 1;
+            }
+
             values_dumps.emplace(key, item_dump);
         }
 
         // Checking if everything can fit in a single line based on constraints
-        const bool max_items_per_line_exceeded
-            = check_max_line_length_exceeded(options.object.items_per_line.any, values_dumps.size());
-        const bool max_line_length_exceeded
-            = check_max_line_length_exceeded(options.object.max_line_length, total_content_length);
+        const bool max_items_per_line_exceeded = check_max_items_per_line(
+            options.object.items_per_line.any, values_dumps.size());
+        const bool max_line_length_exceeded = check_max_line_length(
+            options.object.max_line_length, total_content_length);
         const bool fits_on_single_line
             = (!max_items_per_line_exceeded && !max_line_length_exceeded);
 
@@ -385,14 +415,15 @@ namespace vili::writer
                 {
                     current_line
                         += std::string(options.object.affectation_right_spaces, ' ');
-                } 
+                }
                 current_line += indent(values_dumps[key], options.indent, false);
             }
             if (iteration_index != object_size - 1)
             {
                 items_per_line++;
-                const bool max_items_per_line_exceeded = (options.object.items_per_line.any
-                    && items_per_line >= options.object.items_per_line.any);
+                const bool max_items_per_line_exceeded
+                    = (options.object.items_per_line.any
+                        && items_per_line >= options.object.items_per_line.any);
                 const bool max_line_length_exceeded = (options.object.max_line_length
                     && current_line.size() >= options.object.max_line_length);
                 if (max_items_per_line_exceeded || max_line_length_exceeded
