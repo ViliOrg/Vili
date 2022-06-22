@@ -118,6 +118,29 @@ TEST_CASE("Nested objects")
         REQUIRE(root["object"]["b"]["b"].as<vili::integer>() == 17);
         REQUIRE(root["object"]["c"].as<vili::string>() == "18");
     }
+
+    SECTION("Brace based object inside array")
+    {
+        vili::node root = vili::parser::from_string(
+            "object:\n"
+            "   a: [\n"
+            "       {b: 1, c: 2},\n"
+            "       {d: 3, e: 4}\n"
+            "      ]\n"
+            "   h: [\n"
+            "       {f: 5, g: 6},\n"
+            "       {h: 7, i: 8}\n"
+            "   ]"
+        );
+        REQUIRE(root["object"]["a"][0u]["b"].as<vili::integer>() == 1);
+        REQUIRE(root["object"]["a"][0u]["c"].as<vili::integer>() == 2);
+        REQUIRE(root["object"]["a"][1u]["d"].as<vili::integer>() == 3);
+        REQUIRE(root["object"]["a"][1u]["e"].as<vili::integer>() == 4);
+        REQUIRE(root["object"]["h"][0u]["f"].as<vili::integer>() == 5);
+        REQUIRE(root["object"]["h"][0u]["g"].as<vili::integer>() == 6);
+        REQUIRE(root["object"]["h"][1u]["h"].as<vili::integer>() == 7);
+        REQUIRE(root["object"]["h"][1u]["i"].as<vili::integer>() == 8);
+    }
 }
 
 TEST_CASE("Incorrect object")

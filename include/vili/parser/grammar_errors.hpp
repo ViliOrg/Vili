@@ -87,15 +87,6 @@ namespace vili::parser
     inline constexpr auto
         error_message<rules::close_object> = "unclosed vili object, expected '}'";
 
-    // Templates
-    /**
-     * \brief Message that will be printed when the parser
-     *        find an empty template declaration
-     */
-    template <>
-    inline constexpr auto error_message<
-        rules::template_decl_content> = "invalid template declaration, missing content";
-
     // Nodes
     /**
      * \brief Message that will be printed when the parser

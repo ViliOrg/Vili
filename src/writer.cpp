@@ -133,7 +133,9 @@ namespace vili::writer
         case comma_spacing_policy::both:
             return 2;
         case comma_spacing_policy::left_side:
+            [[fallthrough]];
         case comma_spacing_policy::right_side:
+            [[fallthrough]];
         default:
             return 1;
         }
@@ -171,14 +173,13 @@ namespace vili::writer
 
         std::vector<dumped_item> values_dumps;
         values_dumps.reserve(data.size());
-        unsigned int total_content_length = (
-            options.array.left_bracket_spacing + options.array.right_bracket_spacing);
+        unsigned int total_content_length
+            = (options.array.left_bracket_spacing + options.array.right_bracket_spacing);
 
         // Counters to check whether we exceed the items per line limit
         unsigned int primitive_items_counter = 0;
         unsigned int array_items_counter = 0;
         unsigned int object_items_counter = 0;
-
         for (const vili::node& item : data.as_array())
         {
             dump_options array_item_options = options;
@@ -187,7 +188,9 @@ namespace vili::writer
             total_content_length += item_dump.size();
             // Spacing (*2 if space on both sides of comma) + comma
             total_content_length
-                += (comma_spacing_policy_space_multiplier(options.array.comma_spacing) * options.array.inline_spacing) + 1;
+                += (comma_spacing_policy_space_multiplier(options.array.comma_spacing)
+                       * options.array.inline_spacing)
+                + 1;
             values_dumps.push_back(dumped_item { item_dump, item.type() });
             if (item.is_primitive())
             {
@@ -217,9 +220,8 @@ namespace vili::writer
             = (max_primitives_per_line_exceeded || max_arrays_per_line_exceeded
                 || max_objects_per_line_exceeded || max_items_per_line_exceeded);
 
-        bool max_line_length_exceeded = check_max_line_length(
-            options.array.max_line_length, total_content_length);
-
+        bool max_line_length_exceeded
+            = check_max_line_length(options.array.max_line_length, total_content_length);
         const bool fits_on_single_line
             = (!max_items_per_line_constraint_exceeded && !max_line_length_exceeded);
         if (should_insert_newline_next_to_delimiter(options.array.starts_with_newline,
@@ -237,7 +239,6 @@ namespace vili::writer
         primitive_items_counter = 0;
         array_items_counter = 0;
         object_items_counter = 0;
-
         for (auto it = values_dumps.begin(); it != values_dumps.end(); ++it)
         {
             dumped_item& current_value_dump = *it;
@@ -260,7 +261,6 @@ namespace vili::writer
             {
                 primitive_items_counter++;
             }
-
             if (it != (values_dumps.end() - 1))
             {
                 items_per_line++;
@@ -281,7 +281,6 @@ namespace vili::writer
                         || max_objects_per_line_exceeded);
                 max_line_length_exceeded = (options.array.max_line_length
                     && current_line.size() >= options.array.max_line_length);
-
                 if (max_items_per_line_exceeded || max_line_length_exceeded)
                 {
                     dump_value += current_line;
@@ -380,8 +379,8 @@ namespace vili::writer
         // Checking if everything can fit in a single line based on constraints
         const bool max_items_per_line_exceeded = check_max_items_per_line(
             options.object.items_per_line.any, values_dumps.size());
-        const bool max_line_length_exceeded = check_max_line_length(
-            options.object.max_line_length, total_content_length);
+        const bool max_line_length_exceeded
+            = check_max_line_length(options.object.max_line_length, total_content_length);
         const bool fits_on_single_line
             = (!max_items_per_line_exceeded && !max_line_length_exceeded);
 

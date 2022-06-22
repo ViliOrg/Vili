@@ -266,6 +266,12 @@ namespace vili
          */
         node& operator[](size_t index);
         /**
+         * \brief Access element at given index
+         * \param index index of the children to access
+         * \return reference to the children at given index
+         */
+        node& operator[](unsigned int index);
+        /**
          * \brief Access element at given key
          * \param key key of the children to access
          * \return reference to the children at given key

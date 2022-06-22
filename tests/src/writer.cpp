@@ -128,6 +128,12 @@ TEST_CASE("Object dumps")
 {
     vili::object family
         = vili::object { { "Bob", 20 }, { "Jack", 30 }, { "Hughes", 55 } };
+    vili::object other_family
+        = vili::object { { "Tom", 10 }, { "Bob", 40 }, { "Leo", 65 } };
+    vili::object family_collection = vili::object
+    {
+        { "families", vili::array { family, other_family } }
+    };
     // clang-format off
     vili::object family_advanced = vili::object {
         {"Bob", vili::object {
@@ -167,6 +173,24 @@ TEST_CASE("Object dumps")
                                            "    weight: 95\n"
                                            "    height: 190";
         std::string dump_result = vili::writer::dump(family_advanced, options);
+        REQUIRE(dump_result == expected_result);
+    }
+    SECTION("Objects in array dump")
+    {
+        vili::writer::dump_options options;
+        std::string_view expected_result = "families: [\n"
+                                           "    {\n"
+                                           "        Bob: 20,\n"
+                                           "        Jack: 30,\n"
+                                           "        Hughes: 55\n"
+                                           "    },\n"
+                                           "    {\n"
+                                           "        Tom: 10,\n"
+                                           "        Bob: 40,\n"
+                                           "        Leo: 65\n"
+                                           "    }\n"
+                                           "]";
+        std::string dump_result = vili::writer::dump(family_collection, options);
         REQUIRE(dump_result == expected_result);
     }
 }

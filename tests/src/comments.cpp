@@ -78,22 +78,6 @@ TEST_CASE("Inline comment", "[vili.parser]")
             REQUIRE(root["test"]["tab1"].as<vili::array>() == vili::array{43, 44});
             REQUIRE(root["test"]["int2"].as<vili::integer>() == 45);
         }
-
-        SECTION("Comment in template")
-        {
-            vili::node root = vili::parser::from_string(
-                "template human: {kind: \"human\", name: \"\", age: 0} # comment in template\n"
-                "bob: human {name: \"Bob\", age: 18}   #  comment in template\n"
-                "mark: human {name: \"Mark\"} #   comment in template");
-
-            REQUIRE(root.at("bob").at("kind").as<vili::string>() == "human");
-            REQUIRE(root.at("bob").at("name").as<vili::string>() == "Bob");
-            REQUIRE(root.at("bob").at("age").as<vili::integer>() == 18);
-            REQUIRE(root.at("mark").at("kind").as<vili::string>() == "human");
-            REQUIRE(root.at("mark").at("name").as<vili::string>() == "Mark");
-            REQUIRE(root.at("mark").at("age").as<vili::integer>() == 0);
-            REQUIRE(!root.contains("human"));
-        }
     }
 }
 
@@ -179,23 +163,6 @@ TEST_CASE("Multiline comment")
             REQUIRE(root["test"]["int1"].as<vili::integer>() == 42);
             REQUIRE(root["test"]["tab1"].as<vili::array>() == vili::array{43, 44});
             REQUIRE(root["test"]["int2"].as<vili::integer>() == 45);
-        }
-
-        SECTION("Comment in template")
-        {
-            vili::node root = vili::parser::from_string(
-                "/* one line comment */template human: {kind: \"human\", name: \"\", age: 0}/* multiline\n"
-                "comment */\n"
-                "/* one line comment */bob: human {name: \"Bob\", age: 18}\n"
-                "mark: human {name: \"Mark\"}");
-
-            REQUIRE(root.at("bob").at("kind").as<vili::string>() == "human");
-            REQUIRE(root.at("bob").at("name").as<vili::string>() == "Bob");
-            REQUIRE(root.at("bob").at("age").as<vili::integer>() == 18);
-            REQUIRE(root.at("mark").at("kind").as<vili::string>() == "human");
-            REQUIRE(root.at("mark").at("name").as<vili::string>() == "Mark");
-            REQUIRE(root.at("mark").at("age").as<vili::integer>() == 0);
-            REQUIRE(!root.contains("human"));
         }
     }
 }
