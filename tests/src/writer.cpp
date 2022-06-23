@@ -72,27 +72,12 @@ TEST_CASE("Array dumps")
         REQUIRE(vili::writer::dump(names, options)
             == "[\n \"Bob\",\n \"Carl\",\n \"Jack\"\n]");
     }
-    SECTION("Brackets spacing")
+    SECTION("Inline spacing")
     {
         vili::writer::dump_options options;
-        options.array.left_bracket_spacing = 1;
-        options.array.right_bracket_spacing = 0;
-        REQUIRE(vili::writer::dump(names, options) == "[ \"Bob\", \"Carl\", \"Jack\"]");
-        options.array.left_bracket_spacing = 0;
-        options.array.right_bracket_spacing = 1;
-        REQUIRE(vili::writer::dump(names, options) == "[\"Bob\", \"Carl\", \"Jack\" ]");
-        options.array.left_bracket_spacing = 2;
-        options.array.right_bracket_spacing = 2;
-        REQUIRE(
-            vili::writer::dump(names, options) == "[  \"Bob\", \"Carl\", \"Jack\"  ]");
-    }
-    SECTION("Comma spacing")
-    {
-        vili::writer::dump_options options;
-        options.array.comma_spacing = vili::writer::comma_spacing_policy::both;
         options.array.inline_spacing = 2;
         REQUIRE(
-            vili::writer::dump(names, options) == "[\"Bob\"  ,  \"Carl\"  ,  \"Jack\"]");
+            vili::writer::dump(names, options) == "[\"Bob\",  \"Carl\",  \"Jack\"]");
     }
     SECTION("Force newline on brackets")
     {
@@ -126,6 +111,8 @@ TEST_CASE("Array dumps")
 
 TEST_CASE("Object dumps")
 {
+    vili::object simple_list
+        = vili::object { { "simple_list", vili::array { 1, 2, 3 } } };
     vili::object family
         = vili::object { { "Bob", 20 }, { "Jack", 30 }, { "Hughes", 55 } };
     vili::object other_family
@@ -152,10 +139,30 @@ TEST_CASE("Object dumps")
             {"height", 190}
         }},
     };
+    vili::object more_complex_object = vili::object {
+        { "name", "Runner" },
+        { "framerate", 30 },
+        { "mode", "OneTime" },
+        { "images", vili::array { "runner_1.png", "runner_2.png" } },
+        { "groups", vili::object { { "main", vili::array { 0, 1 } } } },
+        { "code", vili::array { vili::object { { "command", "PlayGroup" }, {"group", "main" } } } }
+    };
     // clang-format on
     SECTION("Simple object dump")
     {
         REQUIRE(vili::writer::dump(family) == "Bob: 20\nJack: 30\nHughes: 55");
+    }
+    SECTION("Simple object with list dump")
+    {
+        REQUIRE(vili::writer::dump(simple_list) == "simple_list: [1, 2, 3]");
+        vili::writer::dump_options options;
+        options.array.items_per_line.any = 1;
+        constexpr std::string_view expected_result = "simple_list: [\n"
+                                                 "    1,\n"
+                                                 "    2,\n"
+                                                 "    3\n"
+                                                 "]";
+        REQUIRE(vili::writer::dump(simple_list, options) == expected_result);
     }
     SECTION("Multilevel object dump")
     {
@@ -164,10 +171,12 @@ TEST_CASE("Object dumps")
                                            "    age: 20\n"
                                            "    weight: 68\n"
                                            "    height: 170\n"
+                                           "\n"
                                            "Jack:\n"
                                            "    age: 30\n"
                                            "    weight: 55\n"
                                            "    height: 160\n"
+                                           "\n"
                                            "Hughes:\n"
                                            "    age: 55\n"
                                            "    weight: 95\n"
@@ -191,6 +200,26 @@ TEST_CASE("Object dumps")
                                            "    }\n"
                                            "]";
         std::string dump_result = vili::writer::dump(family_collection, options);
+        REQUIRE(dump_result == expected_result);
+    }
+    SECTION("More complex object")
+    {
+        vili::writer::dump_options options;
+        std::string_view expected_result
+            = "name: \"Runner\"\n"
+              "framerate: 30\n"
+              "mode: \"OneTime\"\n"
+              "images: [\"runner_1.png\", \"runner_2.png\"]\n"
+              "groups:\n"
+              "    main: [0, 1]\n"
+              "\n"
+              "code: [\n"
+              "    {\n"
+              "        command: \"PlayGroup\",\n"
+              "        group: \"main\"\n"
+              "    }\n"
+              "]";
+        std::string dump_result = vili::writer::dump(more_complex_object, options);
         REQUIRE(dump_result == expected_result);
     }
 }
