@@ -9,9 +9,15 @@
 
 namespace vili::writer
 {
-    dump_state make_child_state(const dump_state& state)
+    dump_state make_child_state(const dump_state& state, bool in_array = false)
     {
-        return dump_state { false, state.depth + 1 };
+        return dump_state {
+            false,
+            state.depth + 1,
+            (in_array || state.object_mode == object_style::braces ) ?
+                object_style::braces
+                : object_style::indent
+        };
     }
 
 #ifdef __cpp_lib_to_chars
@@ -163,10 +169,8 @@ namespace vili::writer
         bool no_children_with_newlines = true;
         for (const vili::node& item : data.as_array())
         {
-            dump_options array_item_options = options;
-            array_item_options.object.style = object_style::braces;
             const std::string item_dump
-                = dump(item, array_item_options, make_child_state(state));
+                = dump(item, options, make_child_state(state, true));
             if (item_dump.find("\n") != std::string::npos)
             {
                 no_children_with_newlines = false;
@@ -308,7 +312,7 @@ namespace vili::writer
         bool must_indent = false;
         std::string current_line;
         const bool bracket_style
-            = (!state.root && (options.object.style == object_style::braces || state.style == object_style::braces));
+            = (!state.root && (options.object.style == object_style::braces || state.object_mode == object_style::braces));
 
         // Opening brace if not root and bracket-style
         if (bracket_style)

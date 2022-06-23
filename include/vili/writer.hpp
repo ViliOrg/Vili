@@ -56,7 +56,7 @@ namespace vili::writer
     {
         bool root = true;
         unsigned depth = 0;
-        object_style style = object_style::indent;
+        object_style object_mode = object_style::indent;
     };
 
     std::string dump_integer(const vili::node& data);
