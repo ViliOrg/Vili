@@ -300,11 +300,6 @@ namespace vili::writer
                 vili::object_typename, vili::to_string(data.type()), VILI_EXC_INFO);
         }
 
-        // Disabling root flag
-        const bool root = options.root;
-        dump_options new_options = options;
-        new_options.root = false;
-
         // Variables
         const vili::object& object_value = data.as<vili::object>();
         std::string dump_value;
@@ -313,7 +308,7 @@ namespace vili::writer
         bool must_indent = false;
         std::string current_line;
         const bool bracket_style
-            = (!root && (options.object.style == object_style::braces || state.style == object_style::braces));
+            = (!state.root && (options.object.style == object_style::braces || state.style == object_style::braces));
 
         // Opening brace if not root and bracket-style
         if (bracket_style)
@@ -329,7 +324,7 @@ namespace vili::writer
         const unsigned int base_required_space = 2;
         for (const auto& [key, value] : data.items())
         {
-            const std::string item_dump = dump(value, new_options, make_child_state(state));
+            const std::string item_dump = dump(value, options, make_child_state(state));
             total_content_length += base_required_space + key.size() + item_dump.size();
             // Whenever we use braces, length will be increased because of the commas and spaces around it
             if (options.object.style == object_style::braces)
@@ -348,7 +343,7 @@ namespace vili::writer
         const bool fits_on_single_line
             = (fits_all_items_in_single_line && fits_total_length_in_single_line);
 
-        if (!root
+        if (!state.root
             && (should_insert_newline_next_to_brackets(options.array.starts_with_newline,
                     options.array.ends_with_newline, fits_on_single_line)
                 || !bracket_style))

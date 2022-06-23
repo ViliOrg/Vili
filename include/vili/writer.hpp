@@ -50,8 +50,6 @@ namespace vili::writer
             object_style style = object_style::indent;
         };
         _object object;
-
-        bool root = true;
     };
 
     struct dump_state
