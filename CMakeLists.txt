@@ -36,22 +36,22 @@ target_link_libraries(vili pegtl)
 
 target_include_directories(vili
     PUBLIC
-        $<INSTALL_INTERFACE:include>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 20)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_EXTENSIONS OFF)
 
-if (NOT DEFINED BUILD_TESTS)
+if(NOT DEFINED BUILD_TESTS)
     set(BUILD_TESTS OFF CACHE BOOL "Build Vili Tests ?")
 endif()
 
-if (BUILD_TESTS)
+if(BUILD_TESTS)
     add_subdirectory(extlibs/catch)
     add_subdirectory(tests)
 endif()
