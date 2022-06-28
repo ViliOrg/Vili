@@ -20,8 +20,6 @@ jobs:
       run: sudo apt-get install -y cmake
     - name: Install G++ and build-essential
       run: sudo apt-get install -y build-essential g++
-    - name: Install git
-      run: sudo apt-get install -y git
     - name: Compile Vili
       run: cd build; cmake -DBUILD_TESTS=ON ..; make -j8
     - name: Run tests
