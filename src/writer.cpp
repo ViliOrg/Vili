@@ -1,6 +1,8 @@
 #include <array>
 #ifdef __cpp_lib_to_chars
 #include <charconv>
+#else
+#include <format>
 #endif
 #include <string>
 #include <string_view>
@@ -85,9 +87,14 @@ namespace vili::writer
             throw exceptions::invalid_cast(
                 vili::number_typename, vili::to_string(data.type()), VILI_EXC_INFO);
         }
-
+        
         const vili::number number_value = data.as<vili::number>();
-        return std::to_string(number_value);
+        double _intpart;
+        if (modf(number_value, &_intpart) == 0.0)
+        {
+            return std::format("{:.1f}", number_value);
+        }
+        return std::format("{}", number_value);
     }
 #endif
 
