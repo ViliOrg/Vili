@@ -35,7 +35,7 @@ jobs:
     - name: Create build directory
       run: mkdir build
     - name: Run CMake on Vili
-      run: cd build; cmake -G "Visual Studio 16 2019" -A x64 -DBUILD_TESTS=ON ..
+      run: cd build; cmake -DBUILD_TESTS=ON ..
       shell: pwsh
     - name: Compile Vili
       run: cmake --build build --config Release -- /m:8
