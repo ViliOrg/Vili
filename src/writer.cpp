@@ -2,7 +2,7 @@
 #ifdef __cpp_lib_to_chars
 #include <charconv>
 #else
-#include <format>
+#include <sstream>
 #endif
 #include <string>
 #include <string_view>
@@ -89,12 +89,17 @@ namespace vili::writer
         }
         
         const vili::number number_value = data.as<vili::number>();
+
+        std::stringstream ss;
+        
         double _intpart;
         if (modf(number_value, &_intpart) == 0.0)
         {
-            return std::format("{:.1f}", number_value);
+            ss << std::showpoint;
+            ss.precision(2);
         }
-        return std::format("{}", number_value);
+        ss << number_value;
+        return ss.str();
     }
 #endif
 
