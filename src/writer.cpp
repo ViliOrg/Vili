@@ -13,13 +13,10 @@ namespace vili::writer
 {
     dump_state make_child_state(const dump_state& state, bool in_array = false)
     {
-        return dump_state {
-            false,
-            state.depth + 1,
-            (in_array || state.object_mode == object_style::braces ) ?
-                object_style::braces
-                : object_style::indent
-        };
+        return dump_state { false, state.depth + 1,
+            (in_array || state.object_mode == object_style::braces)
+                ? object_style::braces
+                : object_style::indent };
     }
 
 #ifdef __cpp_lib_to_chars
@@ -87,11 +84,11 @@ namespace vili::writer
             throw exceptions::invalid_cast(
                 vili::number_typename, vili::to_string(data.type()), VILI_EXC_INFO);
         }
-        
+
         const vili::number number_value = data.as<vili::number>();
 
         std::stringstream ss;
-        
+
         double _intpart;
         if (modf(number_value, &_intpart) == 0.0)
         {
@@ -157,7 +154,8 @@ namespace vili::writer
         vili::node_type node_type;
     };
 
-    std::string dump_array(const vili::node& data, const dump_options& options, const dump_state state)
+    std::string dump_array(
+        const vili::node& data, const dump_options& options, const dump_state state)
     {
         if (!data.is<vili::array>())
         {
@@ -189,8 +187,7 @@ namespace vili::writer
             }
             total_content_length += item_dump.size();
             // Spacing + comma
-            total_content_length
-                += options.array.inline_spacing + 1;
+            total_content_length += options.array.inline_spacing + 1;
             values_dumps.push_back(dumped_item { item_dump, item.type() });
             if (item.is_primitive())
             {
@@ -323,8 +320,9 @@ namespace vili::writer
         const size_t max_size = data.size();
         bool must_indent = false;
         std::string current_line;
-        const bool bracket_style
-            = (!state.root && (options.object.style == object_style::braces || state.object_mode == object_style::braces));
+        const bool bracket_style = (!state.root
+            && (options.object.style == object_style::braces
+                || state.object_mode == object_style::braces));
 
         // Opening brace if not root and bracket-style
         if (bracket_style)
@@ -354,8 +352,8 @@ namespace vili::writer
         // Checking if everything can fit in a single line based on constraints
         const bool fits_all_items_in_single_line = !check_max_items_per_line(
             options.object.items_per_line.any, values_dumps.size());
-        const bool fits_total_length_in_single_line
-            = !check_max_line_length(options.object.max_line_length, total_content_length);
+        const bool fits_total_length_in_single_line = !check_max_line_length(
+            options.object.max_line_length, total_content_length);
         const bool fits_on_single_line
             = (fits_all_items_in_single_line && fits_total_length_in_single_line);
 
@@ -458,7 +456,8 @@ namespace vili::writer
         return dump_value;
     }
 
-    std::string dump(const vili::node& data, const dump_options& options, const dump_state state)
+    std::string dump(
+        const vili::node& data, const dump_options& options, const dump_state state)
     {
         if (data.is<vili::integer>())
         {

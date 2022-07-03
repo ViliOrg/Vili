@@ -1,3 +1,5 @@
+#pragma once
+
 #include <vili/node.hpp>
 
 namespace vili::writer
@@ -63,10 +65,10 @@ namespace vili::writer
     std::string dump_number(const vili::node& data);
     std::string dump_boolean(const vili::node& data);
     std::string dump_string(const vili::node& data);
-    std::string dump_array(const vili::node& data,
-        const dump_options& options, dump_state state);
-    std::string dump_object(const vili::node& data,
-        const dump_options& options, dump_state state);
+    std::string dump_array(
+        const vili::node& data, const dump_options& options, dump_state state);
+    std::string dump_object(
+        const vili::node& data, const dump_options& options, dump_state state);
     std::string dump(const vili::node& data,
         const dump_options& options = dump_options {}, dump_state state = dump_state {});
 }
