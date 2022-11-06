@@ -13,7 +13,7 @@ target_include_directories(vili_tests
 
 find_package(Catch2 CONFIG REQUIRED)
 target_link_libraries(vili_tests PRIVATE
-    vili
+    vili::vili
     Catch2::Catch2WithMain
 )
 
