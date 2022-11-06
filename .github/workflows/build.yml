@@ -11,7 +11,10 @@ jobs:
     name: Build Vili on Linux
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+    - uses: friendlyanon/setup-vcpkg@v1
+      with:
+        committish: master
     - name: Create build directory
       run: mkdir build
     - name: Aptitude update
@@ -21,7 +24,7 @@ jobs:
     - name: Install G++ and build-essential
       run: sudo apt-get install -y build-essential g++
     - name: Compile Vili
-      run: cd build; cmake -DBUILD_TESTS=ON ..; make -j8
+      run: cd build; cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON ..; make -j8
     - name: Run tests
       run: cd build; ./tests/vili_tests
 
@@ -29,7 +32,10 @@ jobs:
     name: Build Vili on Windows
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+    - uses: friendlyanon/setup-vcpkg@v1
+      with:
+        committish: master
     - name: Create build directory
       run: mkdir build
     - name: Run CMake on Vili
@@ -44,7 +50,10 @@ jobs:
     name: Build Vili on MacOS
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+    - uses: friendlyanon/setup-vcpkg@v1
+      with:
+        committish: master
     - name: Create build directory
       run: mkdir build
     - name: Run CMake on Vili

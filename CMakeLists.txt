@@ -1,10 +1,15 @@
-cmake_minimum_required(VERSION 3.6)
+
+cmake_minimum_required(VERSION 3.23)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON
+    CACHE STRING "Create a compile_commands.json file"
+)
+
+if(DEFINED "ENV{VCPKG_ROOT}" AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Try to use vcpkg.")
+endif()
 
 project(vili)
-
-add_subdirectory(extlibs/fifo_map)
-add_subdirectory(extlibs/fmt)
-add_subdirectory(extlibs/pegtl)
 
 set(VILI_HEADERS
     include/vili/config.hpp
@@ -30,9 +35,15 @@ set(VILI_SOURCES
 
 add_library(vili ${VILI_HEADERS} ${VILI_SOURCES})
 
-target_link_libraries(vili fifo_map)
-target_link_libraries(vili fmt)
-target_link_libraries(vili pegtl)
+find_package(fmt CONFIG REQUIRED)
+find_package(nlohmann-fifo-map CONFIG REQUIRED)
+find_package(pegtl CONFIG REQUIRED)
+
+target_link_libraries(vili PRIVATE
+    fmt::fmt
+    nlohmann-fifo-map::nlohmann-fifo-map
+    taocpp::pegtl
+)
 
 target_include_directories(vili
     PUBLIC
@@ -52,6 +63,5 @@ if(NOT DEFINED BUILD_TESTS)
 endif()
 
 if(BUILD_TESTS)
-    add_subdirectory(extlibs/catch)
     add_subdirectory(tests)
 endif()

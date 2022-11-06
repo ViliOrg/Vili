@@ -1,0 +1,16 @@
+{
+    "name": "vili",
+    "version": "1.0.0",
+    "maintainers": [
+        "Sygmei"
+    ],
+    "homepage": "https://github.com/ViliOrg/Vili",
+    "license": "MIT",
+    "description": "A nice and readable data format !",
+    "dependencies": [
+        "fmt",
+        "pegtl",
+        "nlohmann-fifo-map",
+        "catch2"
+    ]
+}
