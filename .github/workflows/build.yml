@@ -26,7 +26,7 @@ jobs:
     - name: Compile Vili
       run: cd build; cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON ..; make -j8
     - name: Run tests
-      run: cd build; ./tests/vili_tests
+      run: cd build; ./bin/vili_tests
 
   build_windows:
     name: Build Vili on Windows
@@ -44,7 +44,7 @@ jobs:
     - name: Compile Vili
       run: cmake --build build --config Release -- /m:8
     - name: Run tests
-      run: ./build/tests/Release/vili_tests.exe
+      run: ./build/bin-Release/vili_tests.exe
 
   build_macos:
     name: Build Vili on MacOS
@@ -61,4 +61,4 @@ jobs:
     - name: Compile Vili
       run: cd build && make -j8
     - name: Run tests
-      run: cd build; ./tests/vili_tests
+      run: cd build; ./bin/vili_tests
