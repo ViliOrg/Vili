@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <string_view>
@@ -264,13 +265,13 @@ namespace vili
          * \param index index of the children to access
          * \return reference to the children at given index
          */
-        node& operator[](size_t index);
+        node& operator[](uint64_t index);
         /**
          * \brief Access element at given index
          * \param index index of the children to access
          * \return reference to the children at given index
          */
-        node& operator[](unsigned int index);
+        node& operator[](uint32_t index);
         /**
          * \brief Access element at given key
          * \param key key of the children to access
@@ -288,7 +289,13 @@ namespace vili
          * \param index index of the children to access
          * \return reference to the children at given index
          */
-        const node& operator[](size_t index) const;
+        const node& operator[](uint64_t index) const;
+        /**
+         * \brief Access element at given index
+         * \param index index of the children to access
+         * \return reference to the children at given index
+         */
+        const node& operator[](uint32_t index) const;
 
         void push(const node& value);
         /**

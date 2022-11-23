@@ -392,12 +392,12 @@ namespace vili
         throw exceptions::invalid_cast(object_typename, to_string(type()), VILI_EXC_INFO);
     }
 
-    node& node::operator[](const size_t index)
+    node& node::operator[](uint64_t index)
     {
         return this->at(index);
     }
 
-    node& node::operator[](unsigned int index)
+    node& node::operator[](uint32_t index)
     {
         return this->at(index);
     }
@@ -412,7 +412,12 @@ namespace vili
         return this->at(key);
     }
 
-    const node & node::operator[](size_t index) const
+    const node & node::operator[](uint64_t index) const
+    {
+        return this->at(index);
+    }
+
+    const node & node::operator[](uint32_t index) const
     {
         return this->at(index);
     }

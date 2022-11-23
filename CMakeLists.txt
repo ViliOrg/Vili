@@ -16,6 +16,25 @@ project(vili
     LANGUAGES "CXX"
 )
 
+if(PROJECT_IS_TOP_LEVEL)
+    #Make sure that build outputs are in predictable directories
+    #This is to ensure that the DLLs are in the same directory as the test, so the tests can run
+    get_property(IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+    if(IS_MULTI_CONFIG)
+        foreach(CONFIG_TYPE IN ITEMS ${CMAKE_CONFIGURATION_TYPES})
+            string(TOUPPER "${CONFIG_TYPE}" UPPERCASE_CONFIG_TYPE)
+            set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${UPPERCASE_CONFIG_TYPE} "${CMAKE_BINARY_DIR}/bin-${CONFIG_TYPE}")
+            set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${UPPERCASE_CONFIG_TYPE} "${CMAKE_BINARY_DIR}/lib-${CONFIG_TYPE}")
+            set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${UPPERCASE_CONFIG_TYPE} "${CMAKE_BINARY_DIR}/lib-${CONFIG_TYPE}")
+        endforeach()
+    else()
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+    endif()
+endif()
+
+
 set(VILI_HEADERS
     include/vili/config.hpp
     include/vili/exceptions.hpp
@@ -49,10 +68,10 @@ find_package(fmt CONFIG REQUIRED)
 find_package(nlohmann-fifo-map CONFIG REQUIRED)
 find_package(pegtl CONFIG REQUIRED)
 
-target_link_libraries(vili PRIVATE
-    fmt::fmt
-    nlohmann-fifo-map::nlohmann-fifo-map
-    taocpp::pegtl
+target_link_libraries(vili
+    PUBLIC fmt::fmt
+    PUBLIC nlohmann-fifo-map::nlohmann-fifo-map
+    PUBLIC taocpp::pegtl
 )
 
 set_target_properties(vili
@@ -61,13 +80,20 @@ set_target_properties(vili
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
         DEBUG_POSTFIX "d"
+        VERSION "${PROJECT_VERSION}"
+        SOVERSION "${PROJECT_VERSION_MAJOR}"
 )
 
-if(NOT DEFINED BUILD_TESTS)
-    set(BUILD_TESTS OFF CACHE BOOL "Build Vili Tests ?")
+option(BUILD_SHARED_LIBS "Build Vili as a dynamic library?" OFF)
+if(BUILD_SHARED_LIBS)
+    set_target_properties(vili
+        PROPERTIES
+            WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
 endif()
 
-if(BUILD_TESTS)
+option(BUILD_TESTS "Build Vili Tests?" OFF)
+if(BUILD_TESTS AND PROJECT_IS_TOP_LEVEL)
     add_subdirectory(tests)
 endif()
 
